@@ -2078,14 +2078,7 @@ async function initSurvey(linkToken) {
 
   const fp = getFingerprint();
 
-  // Verifica se já respondeu
-  const checkRes = await api('getRespostaByToken', { linkToken, fingerprint: fp });
-  if (checkRes.success && checkRes.found) {
-    showSurveyAlreadyAnswered(checkRes.respostas);
-    return;
-  }
-
-  // Carrega pesquisa
+  // Carrega a pesquisa primeiro (para ter as perguntas disponíveis)
   const res = await api('getPesquisaById', { linkToken });
   if (!res.success) {
     document.getElementById('surveyContent').innerHTML = `
@@ -2100,6 +2093,14 @@ async function initSurvey(linkToken) {
   }
 
   state.currentSurvey = { ...res, linkToken, fingerprint: fp };
+
+  // Agora verifica se já respondeu
+  const checkRes = await api('getRespostaByToken', { linkToken, fingerprint: fp });
+  if (checkRes.success && checkRes.found) {
+    showSurveyAlreadyAnswered(checkRes.respostas);
+    return;
+  }
+
   renderSurveyForm(res);
 }
 
@@ -2242,6 +2243,26 @@ function showSurveyThankYou() {
 
 function showSurveyAlreadyAnswered(respostas) {
   document.getElementById('surveyProgressText').textContent = 'Já respondida';
+
+  // Busca as perguntas para exibir o texto em vez da chave interna
+  const perguntas = state.currentSurvey?.perguntas || [];
+
+  // Monta mapa: ID da pergunta → texto
+  const mapaPerguntas = {};
+  perguntas.forEach(p => {
+    // A chave no objeto respostas é "P{ordem}_{id}"
+    const chave = 'P' + p.ORDEM + '_' + p.ID;
+    mapaPerguntas[chave] = { texto: p.TEXTO, tipo: p.TIPO };
+  });
+
+  const itens = Object.entries(respostas || {})
+    .filter(([k]) => !['ID','DATA','FINGERPRINT'].includes(k))
+    .map(([k, v]) => {
+      const pergunta = mapaPerguntas[k];
+      const label = pergunta ? pergunta.texto : k;
+      return { label, valor: v };
+    });
+
   document.getElementById('surveyContent').innerHTML = `
     <div class="survey-card">
       <div class="thanks-card">
@@ -2251,13 +2272,11 @@ function showSurveyAlreadyAnswered(respostas) {
       </div>
       <div class="divider"></div>
       <div>
-        ${Object.entries(respostas || {})
-          .filter(([k]) => !['ID','DATA','FINGERPRINT'].includes(k))
-          .map(([k, v]) => `
-            <div style="margin-bottom:12px;padding:12px;background:var(--surface-warm);border-radius:var(--radius)">
-              <div class="text-muted" style="font-size:12px;margin-bottom:4px">${k}</div>
-              <div class="text-bold">${v || '—'}</div>
-            </div>`).join('')}
+        ${itens.map(({ label, valor }) => `
+          <div style="margin-bottom:12px;padding:12px 16px;background:var(--surface-warm);border-radius:var(--radius);border-left:3px solid var(--accent)">
+            <div class="text-muted" style="font-size:12px;margin-bottom:4px">${label}</div>
+            <div class="text-bold">${valor || '—'}</div>
+          </div>`).join('')}
       </div>
     </div>`;
 }
