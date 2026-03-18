@@ -903,6 +903,10 @@ tbody tr:last-child { border-bottom: none; }
     <div class="login-logo">ClimaPRO</div>
     <div class="login-subtitle">Área Administrativa</div>
     <div class="form-group">
+      <label class="form-label">Usuário</label>
+      <input class="form-control" id="loginUser" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
       <label class="form-label">Senha</label>
       <input class="form-control" id="loginPwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
@@ -1220,15 +1224,20 @@ function getFingerprint() {
 }
 
 // ============================================================
-// API HELPER
+// API HELPER — usa GET para evitar CORS com GAS
 // ============================================================
 async function api(action, data = {}) {
-  if (!GAS_URL) throw new Error('GAS URL não configurada');
-  const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action, ...data }),
+  const params = new URLSearchParams({ action, payload: JSON.stringify(data) });
+  const response = await fetch(GAS_URL + '?' + params.toString(), {
+    method: 'GET',
+    redirect: 'follow',
   });
-  return response.json();
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    throw new Error('Resposta inválida do servidor: ' + text.substring(0, 200));
+  }
 }
 
 // ============================================================
@@ -1265,15 +1274,18 @@ function showScreen(id) {
 // ADMIN LOGIN
 // ============================================================
 async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
   const pwd = document.getElementById('loginPwd').value;
+  if (!username) return toast('Informe o usuário', 'error');
+  if (!pwd) return toast('Informe a senha', 'error');
   try {
-    const res = await api('adminLogin', { password: pwd });
+    const res = await api('adminLogin', { username, password: pwd });
     if (res.success) {
       adminToken = res.token;
       localStorage.setItem(TOKEN_KEY, adminToken);
       await loadAdminApp();
     } else {
-      toast('Senha incorreta', 'error');
+      toast('Usuário ou senha incorretos', 'error');
     }
   } catch (e) {
     toast('Erro: ' + e.message, 'error');
