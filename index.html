@@ -1286,19 +1286,35 @@ function getFingerprint() {
 }
 
 // ============================================================
-// API HELPER — usa GET para evitar CORS com GAS
+// API HELPER — GET com follow redirect, parse manual do texto
 // ============================================================
 async function api(action, data = {}) {
-  const params = new URLSearchParams({ action, payload: JSON.stringify(data) });
-  const response = await fetch(GAS_URL + '?' + params.toString(), {
+  const params = new URLSearchParams({
+    action,
+    payload: JSON.stringify(data)
+  });
+  const url = GAS_URL + '?' + params.toString();
+
+  const response = await fetch(url, {
     method: 'GET',
     redirect: 'follow',
+    mode: 'cors',
   });
+
   const text = await response.text();
+
+  // HtmlService do GAS envolve o JSON em HTML — extrai o conteúdo
+  const cleaned = text
+    .replace(/^[\s\S]*?({[\s\S]*})[\s\S]*$/, '$1')  // extrai JSON do HTML
+    .trim();
+
   try {
-    return JSON.parse(text);
+    return JSON.parse(cleaned);
   } catch(e) {
-    throw new Error('Resposta inválida do servidor: ' + text.substring(0, 200));
+    // Tenta o texto puro mesmo
+    try { return JSON.parse(text.trim()); } catch(e2) {
+      throw new Error('Resposta invalida do servidor: ' + text.substring(0, 300));
+    }
   }
 }
 
