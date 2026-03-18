@@ -883,6 +883,59 @@ tbody tr:last-child { border-bottom: none; }
   .main-content { margin-left: 0; }
   .page { padding: 0; max-width: 100%; }
 }
+
+/* ---- TEMA CARDS ---- */
+.tema-card {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.tema-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.tema-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-pale); }
+.tema-card .tema-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+}
+.tema-card .tema-body { padding: 10px 14px; background: #fff; }
+.tema-card .tema-name { font-size: 13px; font-weight: 600; }
+.tema-card .tema-type { font-size: 11px; color: var(--text-muted); }
+.tema-card .tema-actions {
+  position: absolute;
+  top: 6px; right: 6px;
+  display: flex; gap: 4px;
+  opacity: 0; transition: opacity .15s;
+}
+.tema-card:hover .tema-actions { opacity: 1; }
+
+/* ---- APP THEMES ---- */
+[data-app-theme="dark"] .sidebar { background: #0d0d14; }
+[data-app-theme="light"] .sidebar { background: #2c3e50; }
+[data-app-theme="blue"] .sidebar { background: #0a2463; }
+[data-app-theme="green"] .sidebar { background: #1a4a2e; }
+[data-app-theme="purple"] .sidebar { background: #3d1a6e; }
+[data-app-theme="orange"] .sidebar { background: #7a3000; }
+
+/* ---- TEMA APP SELECTOR ---- */
+.tema-app-btn {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tema-app-btn.active { border-color: var(--accent); background: var(--accent-pale); }
 </style>
 </head>
 <body>
@@ -968,6 +1021,14 @@ tbody tr:last-child { border-bottom: none; }
       </div>
       <div class="nav-item" onclick="showPage('relatorios')" data-page="relatorios">
         <span class="icon">📈</span> Relatórios
+      </div>
+
+      <div class="nav-section-label">Sistema</div>
+      <div class="nav-item" onclick="showPage('temas')" data-page="temas">
+        <span class="icon">🎨</span> Temas
+      </div>
+      <div class="nav-item" onclick="showPage('configuracoes')" data-page="configuracoes">
+        <span class="icon">⚙️</span> Configurações
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -1088,6 +1149,91 @@ tbody tr:last-child { border-bottom: none; }
       </div>
       <div id="relatorioContent"></div>
     </div>
+
+    <!-- PAGE: TEMAS -->
+    <div id="page-temas" class="page hidden">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎨 Temas de Pesquisa</div>
+          <button class="btn btn-primary btn-sm" onclick="openTemaModal()">+ Novo Tema</button>
+        </div>
+        <p class="text-muted mb-3" style="font-size:13px">Os temas são aplicados no formulário público de pesquisa conforme a empresa/vínculo selecionado.</p>
+        <div id="temasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+          <div class="flex-center" style="padding:32px;grid-column:1/-1"><div class="loader dark"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CONFIGURAÇÕES -->
+    <div id="page-configuracoes" class="page hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Identidade -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏢 Identidade do App</div></div>
+          <div class="form-group">
+            <label class="form-label">Nome do Aplicativo</label>
+            <input class="form-control" id="cfg_nome_app" placeholder="ClimaPRO">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome da Empresa / Consultoria</label>
+            <input class="form-control" id="cfg_nome_empresa" placeholder="Minha Consultoria">
+          </div>
+          <div class="form-group">
+            <label class="form-label">URL da Logo</label>
+            <input class="form-control" id="cfg_logo_url" placeholder="https://... ou deixe vazio">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Texto do Rodapé</label>
+            <input class="form-control" id="cfg_rodape_texto" placeholder="Desenvolvido com ClimaPRO">
+          </div>
+        </div>
+
+        <!-- Aparência Admin -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🖥️ Aparência do Painel Admin</div></div>
+          <div class="form-group">
+            <label class="form-label">Tema do Painel</label>
+            <div id="temaAppSelector" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cor Primária Personalizada</label>
+            <div class="flex gap-2" style="align-items:center">
+              <input type="color" id="cfg_cor_primaria_app" value="#2d5be3" style="width:48px;height:38px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;padding:2px">
+              <input class="form-control" id="cfg_cor_primaria_app_hex" placeholder="#2d5be3" style="font-family:monospace">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tamanho da Fonte Base</label>
+            <div class="flex gap-2" style="align-items:center">
+              <input type="range" id="cfg_tamanho_fonte" min="13" max="18" value="15" style="flex:1" oninput="document.getElementById('cfg_fonte_val').textContent=this.value+'px'">
+              <span id="cfg_fonte_val" style="font-size:13px;color:var(--text-muted);width:36px">15px</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="salvarConfiguracoes()" style="width:100%;margin-top:8px">💾 Salvar Configurações</button>
+        </div>
+
+        <!-- Preview do tema admin -->
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-header"><div class="card-title">👁️ Preview do App</div></div>
+          <div id="adminPreview" style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:120px;display:flex;align-items:stretch">
+            <div id="previewSidebar" style="width:160px;display:flex;flex-direction:column;padding:16px 12px;gap:6px">
+              <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#fff" id="previewBrand">ClimaPRO</div>
+              <div style="height:8px;border-radius:4px;background:rgba(255,255,255,.15)"></div>
+              <div style="height:8px;border-radius:4px;background:rgba(255,255,255,.25);width:70%"></div>
+              <div style="height:8px;border-radius:4px;background:rgba(255,255,255,.15)"></div>
+            </div>
+            <div style="flex:1;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="height:12px;background:var(--border);border-radius:4px;width:40%"></div>
+              <div style="height:8px;background:var(--border);border-radius:4px;width:70%"></div>
+              <div style="height:8px;background:var(--border);border-radius:4px;width:55%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1230,11 +1376,80 @@ tbody tr:last-child { border-bottom: none; }
         <label class="form-label">Pesquisa <span class="req">*</span></label>
         <select class="form-control" id="vinculoPesquisa"></select>
       </div>
+      <div class="form-group">
+        <label class="form-label">🎨 Tema da Pesquisa</label>
+        <select class="form-control" id="vinculoTema">
+          <option value="">— Sem tema (padrão) —</option>
+        </select>
+        <div id="vinculoTemaPreview" style="margin-top:8px;display:none"></div>
+      </div>
       <div id="vinculoLinkResult"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalVinculo')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveVinculo()">Criar Vínculo & Gerar Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tema -->
+<div class="modal-overlay" id="modalTema">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTemaTitle">Novo Tema</div>
+      <button class="modal-close" onclick="closeModal('modalTema')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="temaId">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome do Tema <span class="req">*</span></label>
+          <input class="form-control" id="temaNome" placeholder="Ex: Azul TechNova">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fonte</label>
+          <select class="form-control" id="temaFonte">
+            <option value="DM Sans">DM Sans (padrão)</option>
+            <option value="Syne">Syne (display)</option>
+            <option value="Inter">Inter</option>
+            <option value="Roboto">Roboto</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Poppins">Poppins</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Cor Primária</label>
+          <div class="flex gap-2" style="align-items:center">
+            <input type="color" id="temaCorPrimaria" value="#2d5be3" style="width:40px;height:36px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;padding:2px" oninput="syncColorInput('temaCorPrimaria','temaCorPrimariaHex');updateTemaPreview()">
+            <input class="form-control" id="temaCorPrimariaHex" value="#2d5be3" style="font-family:monospace;font-size:13px" oninput="syncColorPicker('temaCorPrimariaHex','temaCorPrimaria');updateTemaPreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cor de Fundo</label>
+          <div class="flex gap-2" style="align-items:center">
+            <input type="color" id="temaCorFundo" value="#f4f3ef" style="width:40px;height:36px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;padding:2px" oninput="syncColorInput('temaCorFundo','temaCorFundoHex');updateTemaPreview()">
+            <input class="form-control" id="temaCorFundoHex" value="#f4f3ef" style="font-family:monospace;font-size:13px" oninput="syncColorPicker('temaCorFundoHex','temaCorFundo');updateTemaPreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cor do Texto</label>
+          <div class="flex gap-2" style="align-items:center">
+            <input type="color" id="temaCorTexto" value="#1a1a2e" style="width:40px;height:36px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;padding:2px" oninput="syncColorInput('temaCorTexto','temaCorTextoHex');updateTemaPreview()">
+            <input class="form-control" id="temaCorTextoHex" value="#1a1a2e" style="font-family:monospace;font-size:13px" oninput="syncColorPicker('temaCorTextoHex','temaCorTexto');updateTemaPreview()">
+          </div>
+        </div>
+      </div>
+      <!-- Preview do tema -->
+      <div class="form-group">
+        <label class="form-label">Preview</label>
+        <div id="temaModalPreview" style="border-radius:8px;overflow:hidden;border:1px solid var(--border)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalTema')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTema()">Salvar Tema</button>
     </div>
   </div>
 </div>
@@ -1269,6 +1484,8 @@ let state = {
   pesquisas: [],
   vinculos: [],
   usuarios: [],
+  temas: [],
+  configs: {},
   currentSurvey: null,
   currentSurveyAnswers: {},
 };
@@ -1363,8 +1580,9 @@ function doLogout() {
 async function loadAdminApp() {
   showScreen('adminShell');
   showPage('dashboard');
-  await Promise.all([loadEmpresas(), loadPesquisas(), loadVinculos(), loadUsuarios()]);
+  await Promise.all([loadEmpresas(), loadPesquisas(), loadVinculos(), loadUsuarios(), loadTemas(), loadConfigs()]);
   renderDashboard();
+  applyAppTheme();
 }
 
 function showPage(page) {
@@ -1372,7 +1590,7 @@ function showPage(page) {
   document.getElementById('page-' + page).classList.remove('hidden');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
-  const titles = { dashboard: 'Dashboard', usuarios: 'Usuários', empresas: 'Empresas', pesquisas: 'Pesquisas', vinculos: 'Vínculos & Links', relatorios: 'Relatórios' };
+  const titles = { dashboard: 'Dashboard', usuarios: 'Usuários', empresas: 'Empresas', pesquisas: 'Pesquisas', vinculos: 'Vínculos & Links', relatorios: 'Relatórios', temas: 'Temas', configuracoes: 'Configurações' };
   document.getElementById('pageTitle').textContent = titles[page] || page;
 
   if (page === 'usuarios') renderUsuarios();
@@ -1380,11 +1598,23 @@ function showPage(page) {
   if (page === 'pesquisas') renderPesquisas();
   if (page === 'empresas') renderEmpresas();
   if (page === 'relatorios') renderRelatoriosPage();
+  if (page === 'temas') renderTemasPage();
+  if (page === 'configuracoes') renderConfiguracoesPage();
 }
 
 async function loadUsuarios() {
   const res = await api('getUsuarios', { token: adminToken });
   if (res.success) state.usuarios = res.data;
+}
+
+async function loadTemas() {
+  const res = await api('getTemas', { token: adminToken });
+  if (res.success) state.temas = res.data;
+}
+
+async function loadConfigs() {
+  const res = await api('getConfiguracoes', { token: adminToken });
+  if (res.success) state.configs = res.data;
 }
 
 async function loadEmpresas() {
@@ -1855,24 +2085,44 @@ function copyLink(token) {
 async function openVinculoModal() {
   const empSel = document.getElementById('vinculoEmpresa');
   const pesqSel = document.getElementById('vinculoPesquisa');
+  const temaSel = document.getElementById('vinculoTema');
+
   empSel.innerHTML = state.empresas.map(e => `<option value="${e.ID}">${e.NOME}</option>`).join('');
   pesqSel.innerHTML = state.pesquisas.map(p => `<option value="${p.ID}">${p.TITULO}</option>`).join('');
+  temaSel.innerHTML = `<option value="">— Sem tema (padrão) —</option>` +
+    state.temas.map(t => `<option value="${t.ID}" style="color:${t.COR_PRIMARIA}">${t.NOME}</option>`).join('');
+
+  temaSel.onchange = () => {
+    const t = state.temas.find(x => x.ID === temaSel.value);
+    const preview = document.getElementById('vinculoTemaPreview');
+    if (t) {
+      preview.style.display = 'block';
+      preview.innerHTML = renderTemaPreviewHtml(t, 'small');
+    } else {
+      preview.style.display = 'none';
+    }
+  };
+
   document.getElementById('vinculoLinkResult').innerHTML = '';
+  document.getElementById('vinculoTemaPreview').style.display = 'none';
   openModal('modalVinculo');
 }
 
 async function saveVinculo() {
   const empresaId = document.getElementById('vinculoEmpresa').value;
   const pesquisaId = document.getElementById('vinculoPesquisa').value;
+  const temaId = document.getElementById('vinculoTema').value;
 
-  const res = await api('vincularPesquisa', { token: adminToken, empresaId, pesquisaId });
+  const res = await api('vincularPesquisa', { token: adminToken, empresaId, pesquisaId, temaId });
   if (res.success) {
     const link = buildSurveyLink(res.linkToken);
+    const temaNome = temaId ? (state.temas.find(t => t.ID === temaId) || {}).NOME || '' : '';
     document.getElementById('vinculoLinkResult').innerHTML = `
       <div class="link-card">
         <div class="link-url">${link}</div>
         <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText('${link}').then(()=>toast('Copiado!','success'))">📋</button>
       </div>
+      ${temaNome ? `<p class="text-muted mt-1">🎨 Tema: <strong>${temaNome}</strong></p>` : ''}
       <p class="text-muted mt-1">Compartilhe este link com os colaboradores da empresa.</p>`;
     await loadVinculos();
     renderDashboard();
@@ -2094,6 +2344,9 @@ async function initSurvey(linkToken) {
 
   state.currentSurvey = { ...res, linkToken, fingerprint: fp };
 
+  // Aplica tema da pesquisa se existir
+  if (res.tema) applyTemaToSurvey(res.tema);
+
   // Agora verifica se já respondeu
   const checkRes = await api('getRespostaByToken', { linkToken, fingerprint: fp });
   if (checkRes.success && checkRes.found) {
@@ -2308,6 +2561,304 @@ function showToast(msg, type = 'info') {
   div.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
   document.getElementById('toastContainer').appendChild(div);
   setTimeout(() => div.remove(), 4000);
+}
+
+// ============================================================
+// TEMAS
+// ============================================================
+const APP_THEMES = [
+  { id: 'dark',   label: 'Dark',    bg: '#0d0d14', color: '#fff' },
+  { id: 'light',  label: 'Light',   bg: '#2c3e50', color: '#fff' },
+  { id: 'blue',   label: 'Azul',    bg: '#0a2463', color: '#fff' },
+  { id: 'green',  label: 'Verde',   bg: '#1a4a2e', color: '#fff' },
+  { id: 'purple', label: 'Roxo',    bg: '#3d1a6e', color: '#fff' },
+  { id: 'orange', label: 'Laranja', bg: '#7a3000', color: '#fff' },
+];
+
+function renderTemasPage() {
+  const grid = document.getElementById('temasGrid');
+  if (!state.temas.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎨</div><div class="empty-title">Nenhum tema cadastrado</div></div>`;
+    return;
+  }
+  grid.innerHTML = state.temas.map(t => `
+    <div class="tema-card" id="tcard_${t.ID}">
+      <div class="tema-header" style="background:${t.COR_PRIMARIA}">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2)"></div>
+        <div style="flex:1">
+          <div style="width:60%;height:6px;background:rgba(255,255,255,.4);border-radius:3px;margin-bottom:4px"></div>
+          <div style="width:40%;height:4px;background:rgba(255,255,255,.25);border-radius:3px"></div>
+        </div>
+        <div class="tema-actions">
+          ${t.TIPO !== 'predefinido' ? `<button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.9);padding:4px 8px;font-size:11px" onclick="openTemaModal('${t.ID}')">✏️</button>` : ''}
+          ${t.TIPO !== 'predefinido' ? `<button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="deleteTema('${t.ID}')">🗑️</button>` : ''}
+        </div>
+      </div>
+      <div class="tema-body" style="background:${t.COR_FUNDO || '#fff'}">
+        <div class="tema-name" style="color:${t.COR_TEXTO || '#1a1a2e'}">${t.NOME}</div>
+        <div class="tema-type">${t.TIPO === 'predefinido' ? '✨ Pré-definido' : '🖌️ Personalizado'} · ${t.FONTE || 'DM Sans'}</div>
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <div style="width:18px;height:18px;border-radius:50%;background:${t.COR_PRIMARIA}" title="Cor primária"></div>
+          <div style="width:18px;height:18px;border-radius:50%;background:${t.COR_FUNDO || '#f4f3ef'};border:1px solid #ddd" title="Fundo"></div>
+          <div style="width:18px;height:18px;border-radius:50%;background:${t.COR_TEXTO || '#1a1a2e'}" title="Texto"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTemaPreviewHtml(t, size = 'normal') {
+  const h = size === 'small' ? 80 : 140;
+  return `<div style="height:${h}px;display:flex;border-radius:8px;overflow:hidden;border:1px solid #ddd">
+    <div style="width:${size==='small'?80:120}px;background:${t.COR_PRIMARIA};padding:10px 8px;display:flex;flex-direction:column;gap:4px">
+      <div style="height:6px;background:rgba(255,255,255,.4);border-radius:3px"></div>
+      <div style="height:4px;background:rgba(255,255,255,.25);border-radius:3px;width:70%"></div>
+      <div style="height:4px;background:rgba(255,255,255,.2);border-radius:3px;width:50%"></div>
+    </div>
+    <div style="flex:1;background:${t.COR_FUNDO||'#f4f3ef'};padding:10px;display:flex;flex-direction:column;gap:6px">
+      <div style="height:8px;background:${t.COR_PRIMARIA}22;border-radius:3px;width:60%"></div>
+      <div style="height:6px;background:${t.COR_TEXTO||'#1a1a2e'}22;border-radius:3px;width:80%"></div>
+      <div style="height:6px;background:${t.COR_TEXTO||'#1a1a2e'}15;border-radius:3px;width:50%"></div>
+      ${size !== 'small' ? `<div style="margin-top:auto;background:${t.COR_PRIMARIA};border-radius:4px;padding:4px 10px;width:fit-content;font-size:10px;color:#fff;font-weight:600">${t.NOME}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function openTemaModal(id) {
+  const t = id ? state.temas.find(x => x.ID === id) : null;
+  document.getElementById('modalTemaTitle').textContent = t ? 'Editar Tema' : 'Novo Tema';
+  document.getElementById('temaId').value = t ? t.ID : '';
+  document.getElementById('temaNome').value = t ? t.NOME : '';
+  document.getElementById('temaFonte').value = t ? (t.FONTE || 'DM Sans') : 'DM Sans';
+
+  const cp = t ? (t.COR_PRIMARIA || '#2d5be3') : '#2d5be3';
+  const cf = t ? (t.COR_FUNDO || '#f4f3ef') : '#f4f3ef';
+  const ct = t ? (t.COR_TEXTO || '#1a1a2e') : '#1a1a2e';
+
+  document.getElementById('temaCorPrimaria').value = cp;
+  document.getElementById('temaCorPrimariaHex').value = cp;
+  document.getElementById('temaCorFundo').value = cf;
+  document.getElementById('temaCorFundoHex').value = cf;
+  document.getElementById('temaCorTexto').value = ct;
+  document.getElementById('temaCorTextoHex').value = ct;
+
+  updateTemaPreview();
+  openModal('modalTema');
+}
+
+function syncColorInput(pickerId, hexId) {
+  document.getElementById(hexId).value = document.getElementById(pickerId).value;
+}
+
+function syncColorPicker(hexId, pickerId) {
+  const val = document.getElementById(hexId).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    document.getElementById(pickerId).value = val;
+  }
+}
+
+function updateTemaPreview() {
+  const t = {
+    NOME: document.getElementById('temaNome').value || 'Preview',
+    COR_PRIMARIA: document.getElementById('temaCorPrimaria').value,
+    COR_FUNDO: document.getElementById('temaCorFundo').value,
+    COR_TEXTO: document.getElementById('temaCorTexto').value,
+  };
+  document.getElementById('temaModalPreview').innerHTML = renderTemaPreviewHtml(t);
+}
+
+async function saveTema() {
+  const id = document.getElementById('temaId').value;
+  const nome = document.getElementById('temaNome').value.trim();
+  if (!nome) return toast('Nome é obrigatório', 'error');
+
+  const payload = {
+    token: adminToken,
+    id: id || undefined,
+    nome,
+    tipo: 'custom',
+    fonte: document.getElementById('temaFonte').value,
+    cor_primaria: document.getElementById('temaCorPrimaria').value,
+    cor_fundo: document.getElementById('temaCorFundo').value,
+    cor_texto: document.getElementById('temaCorTexto').value,
+    cor_card: '#ffffff',
+  };
+
+  const res = await api('saveTema', payload);
+  if (res.success) {
+    toast(id ? 'Tema atualizado!' : 'Tema criado!', 'success');
+    closeModal('modalTema');
+    await loadTemas();
+    renderTemasPage();
+  } else {
+    toast('Erro: ' + res.error, 'error');
+  }
+}
+
+async function deleteTema(id) {
+  if (!confirm('Excluir este tema?')) return;
+  const res = await api('deleteTema', { token: adminToken, id });
+  if (res.success) {
+    toast('Tema excluído', 'success');
+    await loadTemas();
+    renderTemasPage();
+  } else {
+    toast('Erro: ' + res.error, 'error');
+  }
+}
+
+// ============================================================
+// CONFIGURAÇÕES
+// ============================================================
+function renderConfiguracoesPage() {
+  const c = state.configs;
+
+  // Preenche campos
+  document.getElementById('cfg_nome_app').value = c.nome_app || 'ClimaPRO';
+  document.getElementById('cfg_nome_empresa').value = c.nome_empresa || '';
+  document.getElementById('cfg_logo_url').value = c.logo_url || '';
+  document.getElementById('cfg_rodape_texto').value = c.rodape_texto || '';
+
+  const fonte = Number(c.tamanho_fonte) || 15;
+  document.getElementById('cfg_tamanho_fonte').value = fonte;
+  document.getElementById('cfg_fonte_val').textContent = fonte + 'px';
+
+  const corPrimaria = c.cor_primaria_app || '#2d5be3';
+  document.getElementById('cfg_cor_primaria_app').value = corPrimaria;
+  document.getElementById('cfg_cor_primaria_app_hex').value = corPrimaria;
+
+  // Sincroniza color picker com hex
+  document.getElementById('cfg_cor_primaria_app').oninput = function() {
+    document.getElementById('cfg_cor_primaria_app_hex').value = this.value;
+    updateAdminPreview();
+  };
+  document.getElementById('cfg_cor_primaria_app_hex').oninput = function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+      document.getElementById('cfg_cor_primaria_app').value = this.value;
+      updateAdminPreview();
+    }
+  };
+  document.getElementById('cfg_tamanho_fonte').oninput = updateAdminPreview;
+  document.getElementById('cfg_nome_app').oninput = updateAdminPreview;
+
+  // Renderiza seletor de tema admin
+  const temaAtual = c.tema_app || 'dark';
+  const sel = document.getElementById('temaAppSelector');
+  sel.innerHTML = APP_THEMES.map(t => `
+    <div class="tema-app-btn ${temaAtual === t.id ? 'active' : ''}"
+         style="background:${t.bg};color:${t.color}"
+         onclick="selectAppTheme('${t.id}', this)">
+      ${t.label}
+    </div>`).join('');
+
+  updateAdminPreview();
+}
+
+function selectAppTheme(themeId, el) {
+  document.querySelectorAll('.tema-app-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  updateAdminPreview();
+}
+
+function getSelectedAppTheme() {
+  const btn = document.querySelector('.tema-app-btn.active');
+  if (!btn) return 'dark';
+  const t = APP_THEMES.find(x => btn.textContent.trim() === x.label);
+  return t ? t.id : 'dark';
+}
+
+function updateAdminPreview() {
+  const themeId = getSelectedAppTheme();
+  const t = APP_THEMES.find(x => x.id === themeId) || APP_THEMES[0];
+  const cor = document.getElementById('cfg_cor_primaria_app').value || t.bg;
+  const nome = document.getElementById('cfg_nome_app').value || 'ClimaPRO';
+  document.getElementById('previewSidebar').style.background = t.bg;
+  document.getElementById('previewBrand').textContent = nome;
+}
+
+function applyAppTheme() {
+  const themeId = state.configs.tema_app || 'dark';
+  document.getElementById('adminShell').setAttribute('data-app-theme', themeId);
+
+  // Aplica cor primária customizada
+  const cor = state.configs.cor_primaria_app;
+  if (cor && /^#[0-9A-Fa-f]{6}$/.test(cor)) {
+    document.documentElement.style.setProperty('--accent', cor);
+    document.documentElement.style.setProperty('--accent-light', cor + 'cc');
+  }
+
+  // Aplica tamanho de fonte
+  const fonte = Number(state.configs.tamanho_fonte);
+  if (fonte >= 13 && fonte <= 18) {
+    document.body.style.fontSize = fonte + 'px';
+  }
+
+  // Aplica nome do app na sidebar
+  const nome = state.configs.nome_app;
+  if (nome) {
+    document.querySelectorAll('.brand').forEach(el => el.textContent = nome);
+  }
+
+  // Aplica tema na sidebar
+  const t = APP_THEMES.find(x => x.id === themeId);
+  if (t) {
+    const sidebar = document.getElementById('adminSidebar');
+    if (sidebar) sidebar.style.background = t.bg;
+  }
+}
+
+async function salvarConfiguracoes() {
+  const themeId = getSelectedAppTheme();
+  const configs = {
+    nome_app: document.getElementById('cfg_nome_app').value,
+    nome_empresa: document.getElementById('cfg_nome_empresa').value,
+    logo_url: document.getElementById('cfg_logo_url').value,
+    rodape_texto: document.getElementById('cfg_rodape_texto').value,
+    tema_app: themeId,
+    tamanho_fonte: document.getElementById('cfg_tamanho_fonte').value,
+    cor_primaria_app: document.getElementById('cfg_cor_primaria_app').value,
+  };
+
+  const res = await api('salvarConfiguracoes', { token: adminToken, configs });
+  if (res.success) {
+    toast('Configurações salvas!', 'success');
+    await loadConfigs();
+    applyAppTheme();
+  } else {
+    toast('Erro: ' + res.error, 'error');
+  }
+}
+
+// ============================================================
+// APLICAR TEMA NO FORMULÁRIO PÚBLICO
+// ============================================================
+function applyTemaToSurvey(tema) {
+  if (!tema) return;
+
+  const style = document.createElement('style');
+  style.id = 'survey-tema-style';
+  const existing = document.getElementById('survey-tema-style');
+  if (existing) existing.remove();
+
+  style.textContent = `
+    .survey-shell { background: ${tema.COR_FUNDO || '#f4f3ef'} !important; }
+    .survey-header { background: ${tema.COR_PRIMARIA} !important; }
+    .survey-progress-fill { background: ${tema.COR_PRIMARIA} !important; }
+    .survey-empresa-tag { background: ${tema.COR_PRIMARIA}22 !important; color: ${tema.COR_PRIMARIA} !important; }
+    .survey-title { color: ${tema.COR_TEXTO || '#1a1a2e'} !important; }
+    .question-text { color: ${tema.COR_TEXTO || '#1a1a2e'} !important; }
+    .question-num { color: ${tema.COR_PRIMARIA} !important; }
+    .likert-option input:checked + label .likert-btn { background: ${tema.COR_PRIMARIA} !important; border-color: ${tema.COR_PRIMARIA} !important; }
+    .likert-option label:hover .likert-btn { border-color: ${tema.COR_PRIMARIA} !important; color: ${tema.COR_PRIMARIA} !important; }
+    .choice-option input:checked + .choice-label { border-color: ${tema.COR_PRIMARIA} !important; background: ${tema.COR_PRIMARIA}15 !important; }
+    .choice-option input:checked + .choice-label .choice-dot { background: ${tema.COR_PRIMARIA} !important; border-color: ${tema.COR_PRIMARIA} !important; }
+    .btn-primary { background: ${tema.COR_PRIMARIA} !important; }
+    .btn-primary:hover { background: ${tema.COR_PRIMARIA}dd !important; }
+    .form-control:focus { border-color: ${tema.COR_PRIMARIA} !important; }
+    .badge-success { color: ${tema.COR_PRIMARIA} !important; }
+    .survey-card { background: ${tema.COR_CARD || '#ffffff'} !important; }
+    ${tema.FONTE ? `body, .survey-shell { font-family: '${tema.FONTE}', sans-serif !important; }` : ''}
+  `;
+  document.head.appendChild(style);
 }
 
 // ============================================================
