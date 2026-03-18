@@ -1286,7 +1286,7 @@ function getFingerprint() {
 }
 
 // ============================================================
-// API HELPER — iframe + form POST para contornar CORS do GAS
+// API HELPER — form POST + postMessage para contornar CORS
 // ============================================================
 function api(action, data = {}) {
   return new Promise((resolve, reject) => {
@@ -1305,13 +1305,11 @@ function api(action, data = {}) {
     form.target = callbackId;
     form.style.display = 'none';
 
-    // Payload como campo oculto
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'payload';
     input.value = JSON.stringify({ action, ...data });
     form.appendChild(input);
-
     document.body.appendChild(form);
 
     // Timeout de segurança
@@ -1320,36 +1318,23 @@ function api(action, data = {}) {
       reject(new Error('Timeout: GAS não respondeu em 30s'));
     }, 30000);
 
-    // Lê resposta quando iframe carrega
-    iframe.onload = () => {
-      try {
-        const text = iframe.contentDocument
-          ? iframe.contentDocument.body.innerText
-          : iframe.contentWindow.document.body.innerText;
-
-        // Extrai JSON da resposta (HtmlService envolve em HTML)
-        const match = text.match(/(\{[\s\S]*\})/);
-        if (match) {
-          resolve(JSON.parse(match[1]));
-        } else {
-          resolve(JSON.parse(text.trim()));
-        }
-      } catch(e) {
-        reject(new Error('Erro ao ler resposta: ' + e.message));
-      } finally {
-        cleanup();
-      }
-    };
-
-    iframe.onerror = () => {
+    // Escuta postMessage vindo do iframe (GAS envia via window.parent.postMessage)
+    function onMessage(event) {
+      // Aceita mensagens de qualquer origem (GAS muda de domínio em redirects)
+      if (typeof event.data !== 'object' || event.data === null) return;
       cleanup();
-      reject(new Error('Erro no iframe'));
-    };
+      resolve(event.data);
+    }
+
+    window.addEventListener('message', onMessage);
 
     function cleanup() {
       clearTimeout(timeout);
+      window.removeEventListener('message', onMessage);
       try { document.body.removeChild(form); } catch(e) {}
-      try { document.body.removeChild(iframe); } catch(e) {}
+      setTimeout(() => {
+        try { document.body.removeChild(iframe); } catch(e) {}
+      }, 500);
     }
 
     form.submit();
