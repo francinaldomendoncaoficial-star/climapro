@@ -1292,38 +1292,39 @@ function api(action, data = {}) {
   return new Promise((resolve, reject) => {
     const callbackId = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
-    // Cria iframe oculto
     const iframe = document.createElement('iframe');
     iframe.name = callbackId;
-    iframe.style.display = 'none';
+    iframe.style.cssText = 'display:none;position:absolute;width:0;height:0;border:0';
     document.body.appendChild(iframe);
 
-    // Cria form POST apontando para o iframe
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = GAS_URL;
     form.target = callbackId;
     form.style.display = 'none';
 
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'payload';
-    input.value = JSON.stringify({ action, ...data });
-    form.appendChild(input);
+    // Envia callbackId junto para o GAS repassar no postMessage
+    const addField = (name, value) => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = name;
+      inp.value = value;
+      form.appendChild(inp);
+    };
+    addField('payload', JSON.stringify({ action, callbackId, ...data }));
     document.body.appendChild(form);
 
-    // Timeout de segurança
     const timeout = setTimeout(() => {
       cleanup();
       reject(new Error('Timeout: GAS não respondeu em 30s'));
     }, 30000);
 
-    // Escuta postMessage vindo do iframe (GAS envia via window.parent.postMessage)
     function onMessage(event) {
-      // Aceita mensagens de qualquer origem (GAS muda de domínio em redirects)
-      if (typeof event.data !== 'object' || event.data === null) return;
+      // Filtra pelo callbackId para não confundir respostas paralelas
+      if (!event.data || event.data.callbackId !== callbackId) return;
       cleanup();
-      resolve(event.data);
+      const { callbackId: _, ...result } = event.data;
+      resolve(result);
     }
 
     window.addEventListener('message', onMessage);
@@ -1332,9 +1333,7 @@ function api(action, data = {}) {
       clearTimeout(timeout);
       window.removeEventListener('message', onMessage);
       try { document.body.removeChild(form); } catch(e) {}
-      setTimeout(() => {
-        try { document.body.removeChild(iframe); } catch(e) {}
-      }, 500);
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch(e) {} }, 1000);
     }
 
     form.submit();
