@@ -804,34 +804,7 @@ tbody tr:last-child { border-bottom: none; }
 .empty-state .empty-title { font-family: var(--font-display); font-size: 18px; color: var(--text-soft); margin-bottom: 6px; }
 .empty-state .empty-text { font-size: 14px; }
 
-/* ---- SETUP SCREEN ---- */
-.setup-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--ink) 0%, #1a1a4e 100%);
-  padding: 20px;
-}
-
-.setup-card {
-  background: var(--surface-card);
-  border-radius: 16px;
-  padding: 48px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: var(--shadow-lg);
-}
-
-.setup-title {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--ink);
-  margin-bottom: 6px;
-}
-
-.setup-desc { color: var(--text-soft); margin-bottom: 28px; font-size: 14px; }
+/* setup-screen removido */
 
 /* ---- THANKS SCREEN ---- */
 .thanks-card {
@@ -919,30 +892,7 @@ tbody tr:last-child { border-bottom: none; }
      ============================================= -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- =============================================
-     SETUP SCREEN (inicial)
-     ============================================= -->
-<div id="setupScreen" class="setup-screen hidden">
-  <div class="setup-card">
-    <div class="setup-title">🚀 ClimaPRO</div>
-    <p class="setup-desc">Antes de começar, configure a URL do seu Google Apps Script e execute o setup inicial da planilha.</p>
-
-    <div class="form-group">
-      <label class="form-label">URL do Google Apps Script (Web App URL) <span class="req">*</span></label>
-      <input class="form-control" id="setupGasUrl" placeholder="https://script.google.com/macros/s/.../exec" type="url">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Senha do administrador</label>
-      <input class="form-control" id="setupAdminPwd" type="password" placeholder="Deixe em branco para usar: admin@2024" value="">
-    </div>
-
-    <button class="btn btn-primary btn-lg" style="width:100%" onclick="runSetup()">
-      ⚡ Executar Setup
-    </button>
-    <p class="text-muted mt-2 text-center">O setup criará a planilha, pastas e dados de exemplo no seu Google Drive.</p>
-  </div>
-</div>
+<!-- Setup screen removido: GAS URL hardcodada no JS -->
 
 <!-- =============================================
      LOGIN SCREEN
@@ -1242,11 +1192,12 @@ tbody tr:last-child { border-bottom: none; }
 // ============================================================
 // CONFIG & STATE
 // ============================================================
-const GAS_URL_KEY = 'climapro_gas_url';
 const TOKEN_KEY = 'climapro_admin_token';
 const FINGERPRINT_KEY = 'climapro_fp';
 
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbzobFWFBJBMaFpH2aDd_HybokRP1Zh3JSX3uyabUZvHWteQ35ahaIeqgOvVwlc_-Gwv/exec';
+// ⚙️ URL do backend — altere aqui se reimplantar o GAS
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzobFWFBJBMaFpH2aDd_HybokRP1Zh3JSX3uyabUZvHWteQ35ahaIeqgOvVwlc_-Gwv/exec';
+
 let adminToken = localStorage.getItem(TOKEN_KEY) || '';
 let state = {
   empresas: [],
@@ -1293,25 +1244,7 @@ async function init() {
     return;
   }
 
-  // Verifica se GAS URL está configurada
-  if (!GAS_URL) {
-    showScreen('setupScreen');
-    return;
-  }
-
-  // Verifica status
-  try {
-    const status = await api('getStatus');
-    if (!status.configured) {
-      showScreen('setupScreen');
-      return;
-    }
-  } catch (e) {
-    showScreen('setupScreen');
-    return;
-  }
-
-  // Verifica token admin
+  // Verifica token admin salvo
   if (adminToken) {
     await loadAdminApp();
   } else {
@@ -1320,38 +1253,13 @@ async function init() {
 }
 
 function showScreen(id) {
-  ['setupScreen', 'loginScreen', 'surveyScreen', 'adminShell'].forEach(s => {
+  ['loginScreen', 'surveyScreen', 'adminShell'].forEach(s => {
     document.getElementById(s).classList.add('hidden');
   });
   document.getElementById(id).classList.remove('hidden');
 }
 
-// ============================================================
-// SETUP
-// ============================================================
-async function runSetup() {
-  const url = document.getElementById('setupGasUrl').value.trim();
-  const pwd = document.getElementById('setupAdminPwd').value.trim();
-
-  if (!url) return toast('Informe a URL do GAS', 'error');
-
-  GAS_URL = url;
-  localStorage.setItem(GAS_URL_KEY, url);
-
-  showToast('Executando setup...', 'info');
-
-  try {
-    const res = await api('setupApp', { adminPassword: pwd || undefined });
-    if (res.success) {
-      toast('Setup concluído! Planilha criada no Drive.', 'success');
-      setTimeout(() => showScreen('loginScreen'), 1500);
-    } else {
-      toast('Erro: ' + res.error, 'error');
-    }
-  } catch (e) {
-    toast('Erro de conexão: ' + e.message, 'error');
-  }
-}
+// setup removido — GAS URL hardcodada
 
 // ============================================================
 // ADMIN LOGIN
