@@ -913,13 +913,20 @@ tbody tr:last-child { border-bottom: none; }
 }
 .tema-card:hover .tema-actions { opacity: 1; }
 
-/* ---- APP THEMES ---- */
-[data-app-theme="dark"] .sidebar { background: #0d0d14; }
-[data-app-theme="light"] .sidebar { background: #2c3e50; }
-[data-app-theme="blue"] .sidebar { background: #0a2463; }
-[data-app-theme="green"] .sidebar { background: #1a4a2e; }
-[data-app-theme="purple"] .sidebar { background: #3d1a6e; }
-[data-app-theme="orange"] .sidebar { background: #7a3000; }
+/* ---- APP THEMES — 12 temas ---- */
+[data-app-theme] .sidebar { transition: background .3s; }
+[data-app-theme="dark"]     .sidebar { background: #0d0d14; }
+[data-app-theme="midnight"] .sidebar { background: #0f0c29; }
+[data-app-theme="ocean"]    .sidebar { background: #0a2463; }
+[data-app-theme="forest"]   .sidebar { background: #1a3a2a; }
+[data-app-theme="wine"]     .sidebar { background: #3d0c11; }
+[data-app-theme="slate"]    .sidebar { background: #1e293b; }
+[data-app-theme="coffee"]   .sidebar { background: #2c1a0e; }
+[data-app-theme="navy"]     .sidebar { background: #001845; }
+[data-app-theme="charcoal"] .sidebar { background: #1c1c1e; }
+[data-app-theme="emerald"]  .sidebar { background: #064e3b; }
+[data-app-theme="purple"]   .sidebar { background: #3b0764; }
+[data-app-theme="graphite"] .sidebar { background: #292524; }
 
 /* ---- TEMA APP SELECTOR ---- */
 .tema-app-btn {
@@ -2567,12 +2574,18 @@ function showToast(msg, type = 'info') {
 // TEMAS
 // ============================================================
 const APP_THEMES = [
-  { id: 'dark',   label: 'Dark',    bg: '#0d0d14', color: '#fff' },
-  { id: 'light',  label: 'Light',   bg: '#2c3e50', color: '#fff' },
-  { id: 'blue',   label: 'Azul',    bg: '#0a2463', color: '#fff' },
-  { id: 'green',  label: 'Verde',   bg: '#1a4a2e', color: '#fff' },
-  { id: 'purple', label: 'Roxo',    bg: '#3d1a6e', color: '#fff' },
-  { id: 'orange', label: 'Laranja', bg: '#7a3000', color: '#fff' },
+  { id: 'dark',      label: '🌑 Dark',        bg: '#0d0d14',  sidebar: '#0d0d14',  accent: '#2d5be3' },
+  { id: 'midnight',  label: '🌌 Midnight',    bg: '#0f0c29',  sidebar: '#0f0c29',  accent: '#7c3aed' },
+  { id: 'ocean',     label: '🌊 Ocean',       bg: '#0a2463',  sidebar: '#0a2463',  accent: '#00b4d8' },
+  { id: 'forest',    label: '🌲 Forest',      bg: '#1a3a2a',  sidebar: '#1a3a2a',  accent: '#52b788' },
+  { id: 'wine',      label: '🍷 Wine',        bg: '#3d0c11',  sidebar: '#3d0c11',  accent: '#e63946' },
+  { id: 'slate',     label: '🪨 Slate',       bg: '#1e293b',  sidebar: '#1e293b',  accent: '#38bdf8' },
+  { id: 'coffee',    label: '☕ Coffee',      bg: '#2c1a0e',  sidebar: '#2c1a0e',  accent: '#e8a030' },
+  { id: 'navy',      label: '⚓ Navy',        bg: '#001845',  sidebar: '#001845',  accent: '#4cc9f0' },
+  { id: 'charcoal',  label: '🖤 Charcoal',    bg: '#1c1c1e',  sidebar: '#1c1c1e',  accent: '#ff6b6b' },
+  { id: 'emerald',   label: '💚 Emerald',     bg: '#064e3b',  sidebar: '#064e3b',  accent: '#34d399' },
+  { id: 'purple',    label: '💜 Purple',      bg: '#3b0764',  sidebar: '#3b0764',  accent: '#c084fc' },
+  { id: 'graphite',  label: '🔘 Graphite',    bg: '#292524',  sidebar: '#292524',  accent: '#a3a3a3' },
 ];
 
 function renderTemasPage() {
@@ -2740,70 +2753,82 @@ function renderConfiguracoesPage() {
   document.getElementById('cfg_tamanho_fonte').oninput = updateAdminPreview;
   document.getElementById('cfg_nome_app').oninput = updateAdminPreview;
 
-  // Renderiza seletor de tema admin
+  // Renderiza seletor de tema admin — grid 3 colunas
   const temaAtual = c.tema_app || 'dark';
   const sel = document.getElementById('temaAppSelector');
+  sel.style.gridTemplateColumns = 'repeat(3, 1fr)';
   sel.innerHTML = APP_THEMES.map(t => `
     <div class="tema-app-btn ${temaAtual === t.id ? 'active' : ''}"
-         style="background:${t.bg};color:${t.color}"
-         onclick="selectAppTheme('${t.id}', this)">
-      ${t.label}
+         style="background:${t.bg};color:#fff;border-color:${temaAtual===t.id ? t.accent : 'transparent'};flex-direction:column;gap:3px;padding:10px 8px"
+         onclick="selectAppTheme('${t.id}', this)"
+         data-theme-id="${t.id}">
+      <div style="display:flex;gap:4px;align-items:center;width:100%">
+        <div style="width:10px;height:10px;border-radius:50%;background:${t.accent};flex-shrink:0"></div>
+        <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.label}</span>
+      </div>
+      <div style="display:flex;gap:2px;width:100%">
+        <div style="flex:0 0 30%;height:4px;border-radius:2px;background:${t.accent}88"></div>
+        <div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.12)"></div>
+      </div>
     </div>`).join('');
 
   updateAdminPreview();
 }
 
 function selectAppTheme(themeId, el) {
-  document.querySelectorAll('.tema-app-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tema-app-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.borderColor = 'transparent';
+  });
   el.classList.add('active');
+  const t = APP_THEMES.find(x => x.id === themeId);
+  if (t) el.style.borderColor = t.accent;
   updateAdminPreview();
 }
 
 function getSelectedAppTheme() {
   const btn = document.querySelector('.tema-app-btn.active');
   if (!btn) return 'dark';
-  const t = APP_THEMES.find(x => btn.textContent.trim() === x.label);
-  return t ? t.id : 'dark';
+  return btn.getAttribute('data-theme-id') || 'dark';
 }
 
 function updateAdminPreview() {
   const themeId = getSelectedAppTheme();
   const t = APP_THEMES.find(x => x.id === themeId) || APP_THEMES[0];
-  const cor = document.getElementById('cfg_cor_primaria_app').value || t.bg;
   const nome = document.getElementById('cfg_nome_app').value || 'ClimaPRO';
-  document.getElementById('previewSidebar').style.background = t.bg;
+  const sidebar = document.getElementById('previewSidebar');
+  sidebar.style.background = t.bg;
   document.getElementById('previewBrand').textContent = nome;
+  // Mostra accent color no preview
+  sidebar.querySelectorAll('div').forEach((d, i) => {
+    if (i === 1) d.style.background = t.accent + '55';
+  });
 }
 
 function applyAppTheme() {
   const themeId = state.configs.tema_app || 'dark';
+  const t = APP_THEMES.find(x => x.id === themeId) || APP_THEMES[0];
+
   document.getElementById('adminShell').setAttribute('data-app-theme', themeId);
 
-  // Aplica cor primária customizada
-  const cor = state.configs.cor_primaria_app;
-  if (cor && /^#[0-9A-Fa-f]{6}$/.test(cor)) {
-    document.documentElement.style.setProperty('--accent', cor);
-    document.documentElement.style.setProperty('--accent-light', cor + 'cc');
-  }
+  // Aplica cor da sidebar
+  const sidebar = document.getElementById('adminSidebar');
+  if (sidebar) sidebar.style.background = t.bg;
 
-  // Aplica tamanho de fonte
+  // Cor primária: customizada pelo usuário ou a do tema
+  const corCustom = state.configs.cor_primaria_app;
+  const cor = (corCustom && /^#[0-9A-Fa-f]{6}$/.test(corCustom)) ? corCustom : t.accent;
+  document.documentElement.style.setProperty('--accent', cor);
+  document.documentElement.style.setProperty('--accent-light', cor + 'cc');
+  document.documentElement.style.setProperty('--accent-pale', cor + '18');
+
+  // Tamanho de fonte
   const fonte = Number(state.configs.tamanho_fonte);
-  if (fonte >= 13 && fonte <= 18) {
-    document.body.style.fontSize = fonte + 'px';
-  }
+  if (fonte >= 13 && fonte <= 18) document.body.style.fontSize = fonte + 'px';
 
-  // Aplica nome do app na sidebar
+  // Nome do app
   const nome = state.configs.nome_app;
-  if (nome) {
-    document.querySelectorAll('.brand').forEach(el => el.textContent = nome);
-  }
-
-  // Aplica tema na sidebar
-  const t = APP_THEMES.find(x => x.id === themeId);
-  if (t) {
-    const sidebar = document.getElementById('adminSidebar');
-    if (sidebar) sidebar.style.background = t.bg;
-  }
+  if (nome) document.querySelectorAll('.brand').forEach(el => el.textContent = nome);
 }
 
 async function salvarConfiguracoes() {
