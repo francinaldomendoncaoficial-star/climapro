@@ -1165,6 +1165,191 @@ tbody tr:last-child { border-bottom: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ============================================
+   SEÇÕES — Builder Admin
+   ============================================ */
+
+.section-block {
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px rgba(45,91,227,.08);
+}
+
+.section-block-header {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-block-title-input {
+  flex: 1;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: var(--radius);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  outline: none;
+}
+.section-block-title-input::placeholder { color: rgba(255,255,255,.6); }
+.section-block-title-input:focus { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.25); }
+
+.section-block-desc-input {
+  flex: 1;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: var(--radius);
+  color: rgba(255,255,255,.9);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 5px 10px;
+  outline: none;
+  margin-top: 6px;
+  width: 100%;
+}
+.section-block-desc-input::placeholder { color: rgba(255,255,255,.45); }
+
+.section-block-body {
+  padding: 12px 16px 8px;
+  background: var(--accent-pale);
+  border-top: none;
+}
+
+.section-block-footer {
+  padding: 8px 16px 12px;
+  background: var(--accent-pale);
+  display: flex;
+  gap: 8px;
+}
+
+.section-num-badge {
+  background: rgba(255,255,255,.25);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Toggle seções no builder */
+.sections-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-warm);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+.sections-toggle:hover { border-color: var(--accent); background: var(--accent-pale); }
+.sections-toggle.active { border-color: var(--accent); background: var(--accent-pale); }
+
+.toggle-switch {
+  width: 40px; height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px; left: 3px;
+  transition: left .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.sections-toggle.active .toggle-switch { background: var(--accent); }
+.sections-toggle.active .toggle-switch::after { left: 21px; }
+
+/* ============================================
+   SEÇÕES — Formulário Público (Wizard)
+   ============================================ */
+
+.survey-section-header {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.survey-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.survey-section-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.survey-section-desc {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+/* Progress dots para seções */
+.section-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.section-dot {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: all .3s;
+  min-width: 6px;
+}
+.section-dot.done { background: var(--success); }
+.section-dot.active { background: var(--accent); min-width: 20px; }
+
+/* Navegação wizard */
+.wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  gap: 12px;
+}
+
+.wizard-nav-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  flex: 1;
+}
+
 /* ---- PRINT / PDF ---- */
 @media print {
   .sidebar, .topbar, .btn, .modal-overlay { display: none !important; }
@@ -1523,14 +1708,36 @@ tbody tr:last-child { border-bottom: none; }
       <input type="hidden" id="pesquisaId">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Título <span class="req">*</span></label><input class="form-control" id="pesquisaTitulo" placeholder="Ex: Clima e Engajamento 2024"></div>
-        <div class="form-group"><label class="form-label">Descrição</label><input class="form-control" id="pesquisaDesc" placeholder="Breve descrição"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-control" id="pesquisaDescTexto" placeholder="Breve descrição da pesquisa"></div>
       </div>
       <div class="divider"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title">Perguntas</div>
-        <button class="btn btn-secondary btn-sm" onclick="addPerguntaBuilder()">+ Pergunta</button>
+
+      <!-- Toggle seções -->
+      <div class="sections-toggle" id="sectionsToggle" onclick="toggleSectionsMode()">
+        <div class="toggle-switch" id="sectionsSwitchUI"></div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Organizar em Seções</div>
+          <div style="font-size:12px;color:var(--text-muted)">Agrupe as perguntas em blocos com título próprio — o respondente avança seção por seção</div>
+        </div>
       </div>
-      <div id="perguntasBuilder"></div>
+
+      <!-- Modo LIVRE (sem seções) -->
+      <div id="builderModoLivre">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title">Perguntas</div>
+          <button class="btn btn-secondary btn-sm" onclick="addPerguntaBuilder()">+ Pergunta</button>
+        </div>
+        <div id="perguntasBuilder"></div>
+      </div>
+
+      <!-- Modo SEÇÕES -->
+      <div id="builderModoSecoes" class="hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title">Seções</div>
+          <button class="btn btn-primary btn-sm" onclick="addSecaoBuilder()">+ Adicionar Seção</button>
+        </div>
+        <div id="secoesBuilder"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalPesquisa')">Cancelar</button>
@@ -2004,24 +2211,142 @@ function renderPesquisas() {
   </tr>`).join('')}</tbody></table>`;
 }
 
+// ---- Estado do builder de seções ----
+let builderComSecoes = false;
+let secaoCount = 0;
+
+function toggleSectionsMode() {
+  builderComSecoes = !builderComSecoes;
+  applySectionsMode();
+}
+
+function applySectionsMode() {
+  const toggle = document.getElementById('sectionsToggle');
+  const livre  = document.getElementById('builderModoLivre');
+  const secoes = document.getElementById('builderModoSecoes');
+  if (builderComSecoes) {
+    toggle.classList.add('active');
+    livre.classList.add('hidden');
+    secoes.classList.remove('hidden');
+    // Se não tem seções ainda, cria a primeira automaticamente
+    if (!document.getElementById('secoesBuilder').children.length) addSecaoBuilder();
+  } else {
+    toggle.classList.remove('active');
+    livre.classList.remove('hidden');
+    secoes.classList.add('hidden');
+  }
+}
+
+function addSecaoBuilder(data) {
+  secaoCount++;
+  const sid = 'sec_' + secaoCount;
+  const div = document.createElement('div');
+  div.className = 'section-block';
+  div.id = sid;
+  div.innerHTML = `
+    <div class="section-block-header">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="section-num-badge">Seção ${secaoCount}</span>
+          <input class="section-block-title-input" id="${sid}_titulo"
+                 placeholder="Título da seção (ex: Ambiente de Trabalho)"
+                 value="${data?.titulo||''}">
+        </div>
+        <input class="section-block-desc-input" id="${sid}_desc"
+               placeholder="Descrição opcional da seção..."
+               value="${data?.desc||''}">
+      </div>
+      <button onclick="removeSecao('${sid}')"
+              style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+              title="Remover seção">✕</button>
+    </div>
+    <div class="section-block-body" id="${sid}_perguntas"></div>
+    <div class="section-block-footer">
+      <button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:12px"
+              onclick="addPerguntaBuilder(null,'${sid}_perguntas')">+ Pergunta</button>
+      <span style="font-size:12px;color:var(--accent);align-self:center" id="${sid}_count">0 perguntas</span>
+    </div>`;
+  document.getElementById('secoesBuilder').appendChild(div);
+
+  // Preenche perguntas existentes
+  if (data?.perguntas?.length) {
+    data.perguntas.forEach(q => addPerguntaBuilder(q, sid + '_perguntas'));
+  }
+  updateSecaoCount(sid);
+}
+
+function removeSecao(sid) {
+  if (!confirm('Remover esta seção e todas as suas perguntas?')) return;
+  document.getElementById(sid)?.remove();
+  renumberSecoes();
+}
+
+function renumberSecoes() {
+  document.querySelectorAll('.section-block').forEach((el, i) => {
+    const badge = el.querySelector('.section-num-badge');
+    if (badge) badge.textContent = `Seção ${i + 1}`;
+  });
+}
+
+function updateSecaoCount(sid) {
+  const container = document.getElementById(sid + '_perguntas');
+  const countEl   = document.getElementById(sid + '_count');
+  if (!container || !countEl) return;
+  const n = container.querySelectorAll('.question-builder').length;
+  countEl.textContent = n + (n === 1 ? ' pergunta' : ' perguntas');
+}
+
 function openPesquisaModal() {
-  document.getElementById('modalPesquisaTitle').textContent='Nova Pesquisa';
-  document.getElementById('pesquisaId').value='';
-  document.getElementById('pesquisaTitulo').value='';
-  document.getElementById('pesquisaDesc').value='';
-  document.getElementById('perguntasBuilder').innerHTML='';
+  builderComSecoes = false;
+  secaoCount = 0;
+  perguntaCount = 0;
+  document.getElementById('modalPesquisaTitle').textContent = 'Nova Pesquisa';
+  document.getElementById('pesquisaId').value = '';
+  document.getElementById('pesquisaTitulo').value = '';
+  document.getElementById('pesquisaDescTexto').value = '';
+  document.getElementById('perguntasBuilder').innerHTML = '';
+  document.getElementById('secoesBuilder').innerHTML = '';
+  document.getElementById('sectionsToggle').classList.remove('active');
+  document.getElementById('builderModoLivre').classList.remove('hidden');
+  document.getElementById('builderModoSecoes').classList.add('hidden');
   openModal('modalPesquisa');
 }
 
 function editarPesquisa(id) {
-  const p=state.pesquisas.find(x=>x.ID===id);
-  if(!p) return;
-  document.getElementById('modalPesquisaTitle').textContent='Editar Pesquisa';
-  document.getElementById('pesquisaId').value=p.ID;
-  document.getElementById('pesquisaTitulo').value=p.TITULO;
-  document.getElementById('pesquisaDesc').value=p.DESCRICAO;
-  document.getElementById('perguntasBuilder').innerHTML='';
-  (p.perguntas||[]).forEach(q=>addPerguntaBuilder(q));
+  const p = state.pesquisas.find(x => x.ID === id);
+  if (!p) return;
+
+  builderComSecoes = false;
+  secaoCount = 0;
+  perguntaCount = 0;
+
+  document.getElementById('modalPesquisaTitle').textContent = 'Editar Pesquisa';
+  document.getElementById('pesquisaId').value = p.ID;
+  document.getElementById('pesquisaTitulo').value = p.TITULO;
+  document.getElementById('perguntasBuilder').innerHTML = '';
+  document.getElementById('secoesBuilder').innerHTML = '';
+
+  // Detecta se tem seções salvas no campo DESCRICAO
+  let descTexto = p.DESCRICAO || '';
+  let secoes = null;
+  try {
+    const parsed = JSON.parse(p.DESCRICAO || '{}');
+    if (parsed.__secoes) {
+      secoes = parsed.__secoes;
+      descTexto = parsed.__desc || '';
+    }
+  } catch(e) {}
+
+  document.getElementById('pesquisaDescTexto').value = descTexto;
+
+  if (secoes) {
+    builderComSecoes = true;
+    secoes.forEach(s => addSecaoBuilder(s));
+  } else {
+    (p.perguntas || []).forEach(q => addPerguntaBuilder(q));
+  }
+
+  applySectionsMode();
   openModal('modalPesquisa');
 }
 
@@ -2050,7 +2375,7 @@ function verPesquisa(id) {
 // ============================================================
 let perguntaCount = 0;
 
-function addPerguntaBuilder(data) {
+function addPerguntaBuilder(data, containerId) {
   perguntaCount++;
   const id = 'pq_' + perguntaCount;
 
@@ -2064,7 +2389,7 @@ function addPerguntaBuilder(data) {
   div.id = id;
   div.innerHTML = `
     <div class="question-builder-header">
-      <strong style="font-size:13px">Pergunta ${perguntaCount}</strong>
+      <strong style="font-size:13px">Pergunta</strong>
       <div class="flex gap-2">
         <select class="form-control" id="${id}_tipo" style="width:190px;padding:5px 8px;font-size:13px" onchange="updatePerguntaTipo('${id}')">
           <option value="escala"   ${tipo==='escala'  ?'selected':''}>Escala (1–5)</option>
@@ -2072,7 +2397,7 @@ function addPerguntaBuilder(data) {
           <option value="multipla" ${tipo==='multipla'?'selected':''}>Múltipla escolha</option>
           <option value="texto"    ${tipo==='texto'   ?'selected':''}>Texto livre</option>
         </select>
-        <button class="btn btn-danger btn-sm" onclick="removePergunta('${id}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="removePerguntaFromBuilder('${id}')">✕</button>
       </div>
     </div>
     <div class="question-builder-body">
@@ -2086,7 +2411,12 @@ function addPerguntaBuilder(data) {
       </div>
       <div id="${id}_opcoes"></div>
     </div>`;
-  document.getElementById('perguntasBuilder').appendChild(div);
+
+  // Append no container correto: seção ou builder livre
+  const targetContainer = containerId
+    ? document.getElementById(containerId)
+    : document.getElementById('perguntasBuilder');
+  if (targetContainer) targetContainer.appendChild(div);
 
   // Inicializa painel correto
   if (tipo === 'escala') {
@@ -2098,6 +2428,24 @@ function addPerguntaBuilder(data) {
   } else if (tipo === 'multipla') {
     const opcoes = data?.OPCOES ? data.OPCOES.split(',') : [];
     renderOpcoesBuilder(id, opcoes);
+  }
+
+  // Atualiza contador da seção se estiver dentro de uma
+  if (containerId) {
+    const secId = containerId.replace('_perguntas', '');
+    updateSecaoCount(secId);
+  }
+}
+
+function removePerguntaFromBuilder(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // Encontra container pai (seção ou builder livre)
+  const parent = el.parentElement;
+  el.remove();
+  if (parent && parent.id && parent.id.endsWith('_perguntas')) {
+    const secId = parent.id.replace('_perguntas', '');
+    updateSecaoCount(secId);
   }
 }
 
@@ -2344,20 +2692,74 @@ function getPerguntas() {
 async function savePesquisa() {
   const id = document.getElementById('pesquisaId').value;
   const titulo = document.getElementById('pesquisaTitulo').value.trim();
-  const descricao = document.getElementById('pesquisaDesc').value.trim();
-  const perguntas = getPerguntas();
+  const descTexto = document.getElementById('pesquisaDescTexto').value.trim();
+
   if (!titulo) return toast('Título é obrigatório', 'error');
-  if (!perguntas.length) return toast('Adicione ao menos uma pergunta', 'error');
 
-  // Normaliza para o formato que o backend espera
-  const perguntasPayload = perguntas.map(p => ({
-    texto: p.texto,
-    tipo: p.tipo,
-    obrigatoria: p.obrigatoria,
-    opcoes: p.opcoesRaw ? [p.opcoesRaw] : p.opcoes,
-  }));
+  let descricaoFinal = descTexto;
+  let perguntasPayload = [];
 
-  const res = await api(id ? 'updatePesquisa' : 'createPesquisa', { token:adminToken, id, titulo, descricao, perguntas: perguntasPayload });
+  if (builderComSecoes) {
+    // Coleta seções
+    const secoes = [];
+    let ordemGlobal = 1;
+    let totalPerguntas = 0;
+
+    document.querySelectorAll('#secoesBuilder > .section-block').forEach((secEl) => {
+      const sid = secEl.id;
+      const secTitulo = document.getElementById(sid + '_titulo')?.value.trim() || 'Seção';
+      const secDesc   = document.getElementById(sid + '_desc')?.value.trim() || '';
+      const pergsNaSecao = [];
+
+      secEl.querySelectorAll('.question-builder').forEach(div => {
+        const qid = div.id;
+        const texto = document.getElementById(qid + '_texto').value.trim();
+        const tipo  = document.getElementById(qid + '_tipo').value;
+        const obrig = document.getElementById(qid + '_obrig').checked;
+        if (!texto) return;
+
+        let opcoesStr = '';
+        if (tipo === 'escala') {
+          const ec = document.getElementById(qid + '_emoji_check');
+          if (ec?.checked) opcoesStr = 'emoji:' + getSelectedEmojiStyle(qid);
+        } else if (tipo === 'estrelas') {
+          opcoesStr = 'star:' + getStarCount(qid) + ':' + getStarStyle(qid);
+        } else if (tipo === 'multipla') {
+          const opts = [];
+          document.querySelectorAll(`#${qid}_optList .option-item input`).forEach(inp => { const v=inp.value.trim(); if(v) opts.push(v); });
+          opcoesStr = opts.join(',');
+        }
+
+        perguntasPayload.push({ texto, tipo, obrigatoria: obrig, opcoes: opcoesStr ? [opcoesStr] : [], ordem: ordemGlobal });
+        pergsNaSecao.push({ texto, tipo, opcoes: opcoesStr });
+        ordemGlobal++;
+        totalPerguntas++;
+      });
+
+      secoes.push({ titulo: secTitulo, desc: secDesc, perguntas: pergsNaSecao });
+    });
+
+    if (totalPerguntas === 0) return toast('Adicione ao menos uma pergunta', 'error');
+
+    // Serializa estrutura de seções no campo DESCRICAO como JSON
+    descricaoFinal = JSON.stringify({ __secoes: secoes, __desc: descTexto });
+
+  } else {
+    // Modo livre — comportamento original
+    const perguntas = getPerguntas();
+    if (!perguntas.length) return toast('Adicione ao menos uma pergunta', 'error');
+    perguntasPayload = perguntas.map(p => ({
+      texto: p.texto, tipo: p.tipo, obrigatoria: p.obrigatoria,
+      opcoes: p.opcoesRaw ? [p.opcoesRaw] : p.opcoes,
+    }));
+  }
+
+  const res = await api(id ? 'updatePesquisa' : 'createPesquisa', {
+    token: adminToken, id, titulo,
+    descricao: descricaoFinal,
+    perguntas: perguntasPayload,
+  });
+
   if (res.success) {
     toast(id ? 'Pesquisa atualizada!' : 'Pesquisa criada!', 'success');
     closeModal('modalPesquisa');
@@ -2567,30 +2969,225 @@ async function initSurvey(linkToken) {
 }
 
 function renderSurveyForm(data) {
-  const {pesquisa,empresa,perguntas}=data;
-  document.getElementById('surveyProgressText').textContent=`${perguntas.length} perguntas`;
-  document.getElementById('surveyProgress').style.width='0%';
-  document.getElementById('surveyContent').innerHTML=`
+  const {pesquisa, empresa, perguntas} = data;
+
+  // Detecta se tem seções
+  let secoes = null;
+  let descPublica = pesquisa.DESCRICAO || '';
+  try {
+    const parsed = JSON.parse(pesquisa.DESCRICAO || '{}');
+    if (parsed.__secoes) { secoes = parsed.__secoes; descPublica = parsed.__desc || ''; }
+  } catch(e) {}
+
+  if (secoes) {
+    // ---- MODO WIZARD (seções) ----
+    state.currentSurvey.secoes = secoes;
+    state.currentSurvey.secaoAtual = 0;
+    state.currentSurvey.descPublica = descPublica;
+    renderSurveySection(data, secoes, 0);
+  } else {
+    // ---- MODO PÁGINA ÚNICA ----
+    state.currentSurvey.secoes = null;
+    document.getElementById('surveyProgressText').textContent = `${perguntas.length} perguntas`;
+    document.getElementById('surveyProgress').style.width = '0%';
+    document.getElementById('surveyContent').innerHTML = `
+      <div class="survey-card" id="surveyFormCard">
+        <div class="survey-empresa-tag">🏢 ${empresa?.NOME||'Empresa'}</div>
+        <div class="survey-title">${pesquisa.TITULO}</div>
+        <div class="survey-desc">${descPublica}</div>
+        <form id="surveyForm" onsubmit="return false">
+          ${perguntas.map((q,i)=>renderPerguntaForm(q,i)).join('')}
+        </form>
+        <div class="mt-3" style="display:flex;justify-content:flex-end">
+          <button class="btn btn-primary btn-lg" onclick="submitSurvey()">✅ Enviar Respostas</button>
+        </div>
+      </div>`;
+    document.getElementById('surveyForm').addEventListener('change', updateSurveyProgress);
+  }
+}
+
+function renderSurveySection(data, secoes, secIdx) {
+  const {pesquisa, empresa, perguntas} = data;
+  const secao = secoes[secIdx];
+  const totalSecoes = secoes.length;
+  const isLast = secIdx === totalSecoes - 1;
+
+  // Perguntas desta seção — mapeia pelo índice dentro da seção
+  // As perguntas globais já estão em ordem, particionamos por seção
+  const pergsPorSecao = particionarPerguntasPorSecao(perguntas, secoes);
+  const pergsSecao = pergsPorSecao[secIdx] || [];
+  const totalPergs = perguntas.length;
+
+  // Progresso
+  const pct = Math.round((secIdx / totalSecoes) * 100);
+  document.getElementById('surveyProgress').style.width = pct + '%';
+  document.getElementById('surveyProgressText').textContent =
+    `Seção ${secIdx+1} de ${totalSecoes}`;
+
+  // Dots de progresso
+  const dotsHtml = secoes.map((s, i) => `
+    <div class="section-dot ${i < secIdx ? 'done' : i === secIdx ? 'active' : ''}"
+         style="flex:${i===secIdx?2:1}"></div>`).join('');
+
+  document.getElementById('surveyContent').innerHTML = `
     <div class="survey-card" id="surveyFormCard">
       <div class="survey-empresa-tag">🏢 ${empresa?.NOME||'Empresa'}</div>
-      <div class="survey-title">${pesquisa.TITULO}</div>
-      <div class="survey-desc">${pesquisa.DESCRICAO||''}</div>
+
+      <!-- Cabeçalho da seção -->
+      <div class="survey-section-header">
+        <div class="survey-section-label">
+          <span>📂</span> Seção ${secIdx+1} de ${totalSecoes}
+        </div>
+        <div class="survey-section-name">${secao.titulo || 'Seção ' + (secIdx+1)}</div>
+        ${secao.desc ? `<div class="survey-section-desc">${secao.desc}</div>` : ''}
+        <div class="section-dots">${dotsHtml}</div>
+      </div>
+
       <form id="surveyForm" onsubmit="return false">
-        ${perguntas.map((q,i)=>renderPerguntaForm(q,i)).join('')}
+        ${pergsSecao.map((q, i) => renderPerguntaForm(q, i, pergsSecao.length)).join('')}
       </form>
-      <div class="mt-3" style="display:flex;justify-content:flex-end">
-        <button class="btn btn-primary btn-lg" onclick="submitSurvey()">✅ Enviar Respostas</button>
+
+      <!-- Navegação wizard -->
+      <div class="wizard-nav">
+        ${secIdx > 0
+          ? `<button class="btn btn-ghost" onclick="irParaSecao(${secIdx-1})">← Anterior</button>`
+          : `<div></div>`}
+        <div class="wizard-nav-info">
+          ${pergsSecao.length} pergunta${pergsSecao.length!==1?'s':''} nesta seção
+        </div>
+        ${isLast
+          ? `<button class="btn btn-primary btn-lg" onclick="submitSurvey()">✅ Enviar</button>`
+          : `<button class="btn btn-primary" onclick="avancarSecao(${secIdx})">Próximo →</button>`}
       </div>
     </div>`;
-  document.getElementById('surveyForm').addEventListener('change',updateSurveyProgress);
+
+  document.getElementById('surveyForm').addEventListener('change', updateSurveyProgress);
+  updateSurveyProgress();
+  // Rola para o topo suavemente
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function particionarPerguntasPorSecao(perguntas, secoes) {
+  // Distribui as perguntas globais entre as seções baseado na quantidade declarada em cada seção
+  const resultado = [];
+  let idx = 0;
+  secoes.forEach(s => {
+    const qtd = s.perguntas ? s.perguntas.length : 0;
+    resultado.push(perguntas.slice(idx, idx + qtd));
+    idx += qtd;
+  });
+  // Se sobrar perguntas sem seção, coloca na última
+  if (idx < perguntas.length) {
+    if (!resultado.length) resultado.push([]);
+    resultado[resultado.length - 1].push(...perguntas.slice(idx));
+  }
+  return resultado;
+}
+
+function irParaSecao(secIdx) {
+  const survey = state.currentSurvey;
+  survey.secaoAtual = secIdx;
+  renderSurveySection(survey, survey.secoes, secIdx);
+}
+
+function avancarSecao(secIdx) {
+  const survey = state.currentSurvey;
+  const secoes = survey.secoes;
+  const pergsPorSecao = particionarPerguntasPorSecao(survey.perguntas, secoes);
+  const pergsSecao = pergsPorSecao[secIdx] || [];
+
+  // Valida obrigatórias da seção atual
+  const missing = [];
+  pergsSecao.forEach(q => {
+    if (q.OBRIGATORIA !== 'sim') return;
+    if (q.TIPO === 'texto') {
+      const el = document.getElementById(`q_${q.ID}_text`);
+      if (!el || !el.value.trim()) missing.push(q.TEXTO.substring(0, 30));
+    } else {
+      if (!document.querySelector(`input[name="q_${q.ID}"]:checked`)) missing.push(q.TEXTO.substring(0, 30));
+    }
+  });
+
+  if (missing.length) {
+    toast('Responda as perguntas obrigatórias (⚡) antes de avançar', 'error');
+    return;
+  }
+
+  survey.secaoAtual = secIdx + 1;
+  renderSurveySection(survey, secoes, secIdx + 1);
+}
+
+function updateSurveyProgress() {
+  const survey = state.currentSurvey;
+  const secoes = survey?.secoes;
+
+  if (secoes) {
+    // Modo wizard: progresso dentro da seção atual
+    const secIdx = survey.secaoAtual || 0;
+    const pergsPorSecao = particionarPerguntasPorSecao(survey.perguntas, secoes);
+    const pergsSecao = pergsPorSecao[secIdx] || [];
+    let answered = 0;
+    pergsSecao.forEach(q => {
+      if (q.TIPO === 'texto') { const el = document.getElementById(`q_${q.ID}_text`); if (el?.value.trim()) answered++; }
+      else { if (document.querySelector(`input[name="q_${q.ID}"]:checked`)) answered++; }
+    });
+    const pct = Math.round(((secIdx + answered / Math.max(pergsSecao.length, 1)) / secoes.length) * 100);
+    document.getElementById('surveyProgress').style.width = pct + '%';
+  } else {
+    // Modo página única
+    const perguntas = survey?.perguntas || [];
+    let answered = 0;
+    perguntas.forEach(q => {
+      if (q.TIPO === 'texto') { const el = document.getElementById(`q_${q.ID}_text`); if (el?.value.trim()) answered++; }
+      else { if (document.querySelector(`input[name="q_${q.ID}"]:checked`)) answered++; }
+    });
+    const pct = perguntas.length > 0 ? Math.round((answered / perguntas.length) * 100) : 0;
+    document.getElementById('surveyProgress').style.width = pct + '%';
+    document.getElementById('surveyProgressText').textContent = `${answered}/${perguntas.length} respondidas`;
+  }
+}
+
+async function submitSurvey() {
+  const survey = state.currentSurvey;
+  const perguntas = survey.perguntas || [];
+  const secoes = survey.secoes;
+  const respostas = {};
+  let missing = [];
+
+  // Se tem seções: valida apenas a seção atual (última)
+  const pergsParaValidar = secoes
+    ? (particionarPerguntasPorSecao(perguntas, secoes)[survey.secaoAtual] || [])
+    : perguntas;
+
+  pergsParaValidar.forEach(q => {
+    if (q.OBRIGATORIA === 'sim') {
+      if (q.TIPO === 'texto') { const el = document.getElementById(`q_${q.ID}_text`); if (!el?.value.trim()) missing.push(q.TEXTO.substring(0,30)); }
+      else { if (!document.querySelector(`input[name="q_${q.ID}"]:checked`)) missing.push(q.TEXTO.substring(0,30)); }
+    }
+  });
+
+  if (missing.length) { toast('Responda as perguntas obrigatórias (⚡)', 'error'); return; }
+
+  // Coleta TODAS as respostas (todas as seções já respondidas + seção atual)
+  perguntas.forEach(q => {
+    if (q.TIPO === 'texto') { const el = document.getElementById(`q_${q.ID}_text`); respostas[q.ID] = el ? el.value.trim() : ''; }
+    else { const sel = document.querySelector(`input[name="q_${q.ID}"]:checked`); respostas[q.ID] = sel ? sel.value : ''; }
+  });
+
+  const res = await api('submitResposta', { linkToken: survey.linkToken, fingerprint: survey.fingerprint, respostas });
+  if (res.success) { showSurveyThankYou(); }
+  else if (res.error === 'already_answered') {
+    const checkRes = await api('getRespostaByToken', { linkToken: survey.linkToken, fingerprint: survey.fingerprint });
+    showSurveyAlreadyAnswered(checkRes.respostas);
+  } else toast('Erro ao enviar: ' + res.error, 'error');
 }
 
 /**
  * Renderiza uma pergunta no formulário público.
  * Detecta se é escala com emoji pelo prefixo "emoji:" nas opções.
  */
-function renderPerguntaForm(q, idx) {
-  const total = state.currentSurvey?.perguntas?.length || '?';
+function renderPerguntaForm(q, idx, sectionTotal) {
+  const total = sectionTotal ?? (state.currentSurvey?.perguntas?.length || '?');
   const isEmoji = q.OPCOES && String(q.OPCOES).startsWith('emoji:');
   let input = '';
 
@@ -2697,33 +3294,6 @@ function renderEmojiScaleInput(q, style) {
           </div>`;
       }).join('')}
     </div>`;
-}
-
-function updateSurveyProgress() {
-  const perguntas=state.currentSurvey?.perguntas||[];
-  let answered=0;
-  perguntas.forEach(q=>{
-    if(q.TIPO==='texto'){const el=document.getElementById(`q_${q.ID}_text`);if(el&&el.value.trim())answered++;}
-    else{if(document.querySelector(`input[name="q_${q.ID}"]:checked`))answered++;}
-  });
-  const pct=perguntas.length>0?Math.round((answered/perguntas.length)*100):0;
-  document.getElementById('surveyProgress').style.width=pct+'%';
-  document.getElementById('surveyProgressText').textContent=`${answered}/${perguntas.length} respondidas`;
-}
-
-async function submitSurvey() {
-  const survey=state.currentSurvey;
-  const perguntas=survey.perguntas||[];
-  const respostas={};let missing=[];
-  perguntas.forEach(q=>{
-    if(q.TIPO==='texto'){const el=document.getElementById(`q_${q.ID}_text`);respostas[q.ID]=el?el.value.trim():'';if(q.OBRIGATORIA==='sim'&&!respostas[q.ID])missing.push(q.TEXTO.substring(0,30));}
-    else{const sel=document.querySelector(`input[name="q_${q.ID}"]:checked`);respostas[q.ID]=sel?sel.value:'';if(q.OBRIGATORIA==='sim'&&!respostas[q.ID])missing.push(q.TEXTO.substring(0,30));}
-  });
-  if(missing.length>0){toast('Responda as perguntas obrigatórias (⚡)','error');return;}
-  const res=await api('submitResposta',{linkToken:survey.linkToken,fingerprint:survey.fingerprint,respostas});
-  if(res.success){showSurveyThankYou();}
-  else if(res.error==='already_answered'){const checkRes=await api('getRespostaByToken',{linkToken:survey.linkToken,fingerprint:survey.fingerprint});showSurveyAlreadyAnswered(checkRes.respostas);}
-  else toast('Erro ao enviar: '+res.error,'error');
 }
 
 function showSurveyThankYou() {
