@@ -379,59 +379,110 @@ tbody tr:last-child { border-bottom: none; }
 .modal-footer { padding: 16px 28px 24px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--border); }
 
 /* ---- LOGIN SCREEN ---- */
+:root {
+  --login-bg: #f0f2f8;
+  --login-bg2: #e4e9f4;
+  --login-accent: #2d5be3;
+  --login-card-bg: #ffffff;
+  --login-card-border: rgba(45,91,227,.15);
+  --login-text: #1a1a2e;
+  --login-text-soft: #4a4a6a;
+  --login-text-muted: #8a8aa0;
+  --login-input-bg: #f8f9ff;
+  --login-input-border: #d8d5cc;
+  --login-stripe: rgba(45,91,227,.04);
+}
+
 .login-screen {
   min-height: 100vh;
-  background: var(--ink);
+  background: linear-gradient(135deg, var(--login-bg) 0%, var(--login-bg2) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  transition: background .4s;
 }
 
 .login-bg-pattern {
   position: absolute;
   inset: 0;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,.02) 40px, rgba(255,255,255,.02) 41px),
-    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,.02) 40px, rgba(255,255,255,.02) 41px);
+    repeating-linear-gradient(0deg, transparent, transparent 48px, var(--login-stripe) 48px, var(--login-stripe) 49px),
+    repeating-linear-gradient(90deg, transparent, transparent 48px, var(--login-stripe) 48px, var(--login-stripe) 49px);
+  pointer-events: none;
+}
+
+.login-bg-pattern::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--login-accent) 0%, transparent 70%);
+  opacity: .06;
+  top: -120px; right: -120px;
+}
+
+.login-bg-pattern::after {
+  content: '';
+  position: absolute;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--login-accent) 0%, transparent 70%);
+  opacity: .05;
+  bottom: -80px; left: -80px;
 }
 
 .login-card {
   position: relative;
   z-index: 1;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 16px;
+  background: var(--login-card-bg);
+  border: 1.5px solid var(--login-card-border);
+  border-radius: 20px;
   padding: 48px;
-  width: 380px;
-  backdrop-filter: blur(10px);
+  width: 400px;
+  box-shadow: 0 20px 60px rgba(45,91,227,.10), 0 4px 16px rgba(0,0,0,.06);
+  transition: background .3s, border-color .3s;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--login-accent);
+  border-radius: 20px 20px 0 0;
+  transition: background .3s;
 }
 
 .login-logo {
   font-family: var(--font-display);
   font-size: 36px;
   font-weight: 800;
-  color: #fff;
+  color: var(--login-accent);
   margin-bottom: 4px;
+  letter-spacing: -.5px;
+  transition: color .3s;
 }
 
 .login-subtitle {
-  font-size: 13px;
-  color: rgba(255,255,255,.4);
+  font-size: 12px;
+  color: var(--login-text-muted);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 36px;
 }
 
-.login-card .form-label { color: rgba(255,255,255,.6); }
+.login-card .form-label { color: var(--login-text-soft); }
 .login-card .form-control {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.12);
-  color: #fff;
+  background: var(--login-input-bg);
+  border-color: var(--login-input-border);
+  color: var(--login-text);
 }
-.login-card .form-control:focus { border-color: var(--accent-light); }
-.login-card .form-control::placeholder { color: rgba(255,255,255,.25); }
+.login-card .form-control:focus { border-color: var(--login-accent); }
+.login-card .form-control::placeholder { color: var(--login-text-muted); }
+.login-card .btn-primary { background: var(--login-accent); }
+.login-card p { color: var(--login-text-muted); }
 
 /* ---- SURVEY SCREEN ---- */
 .survey-shell {
@@ -1703,10 +1754,57 @@ function api(action, data = {}) {
 // INIT
 // ============================================================
 async function init() {
+  // Aplica tema salvo no localStorage imediatamente (evita flash escuro)
+  const savedTheme = localStorage.getItem('climapro_tema') || 'light';
+  const savedAccent = localStorage.getItem('climapro_accent') || '';
+  const t0 = APP_THEMES.find(x=>x.id===savedTheme) || APP_THEMES[0];
+  applyLoginTheme(t0, savedAccent || t0.accent);
+
   const params = new URLSearchParams(window.location.search);
   const linkToken = params.get('survey') || params.get('s');
-  if (linkToken) { await initSurvey(linkToken); return; }
-  if (adminToken) { await loadAdminApp(); } else { showScreen('loginScreen'); }
+
+  if (linkToken) {
+    // Formulário público: busca configs antes de mostrar qualquer tela
+    try {
+      const cfgRes = await api('getConfiguracoesPublicas', {});
+      if (cfgRes.success && cfgRes.data) {
+        const cor = cfgRes.data.cor_primaria_app || cfgRes.data.accent || '';
+        const tId = cfgRes.data.tema_app || 'light';
+        const tPub = APP_THEMES.find(x=>x.id===tId) || APP_THEMES[0];
+        applyLoginTheme(tPub, cor || tPub.accent);
+        // Aplica cor primária global para o survey
+        if (cor) {
+          document.documentElement.style.setProperty('--accent', cor);
+          document.documentElement.style.setProperty('--accent-light', cor+'cc');
+          document.documentElement.style.setProperty('--accent-pale', cor+'18');
+        }
+        const nome = cfgRes.data.nome_app;
+        if (nome) document.querySelectorAll('.brand').forEach(el=>el.textContent=nome);
+      }
+    } catch(e) { /* silencioso — usa defaults */ }
+    await initSurvey(linkToken);
+    return;
+  }
+
+  if (adminToken) {
+    await loadAdminApp();
+  } else {
+    showScreen('loginScreen');
+    // Carrega configs públicas para aplicar tema no login mesmo sem estar logado
+    try {
+      const cfgRes = await api('getConfiguracoesPublicas', {});
+      if (cfgRes.success && cfgRes.data) {
+        const tId = cfgRes.data.tema_app || 'light';
+        const cor = cfgRes.data.cor_primaria_app || '';
+        const tPub = APP_THEMES.find(x=>x.id===tId) || APP_THEMES[0];
+        applyLoginTheme(tPub, cor || tPub.accent);
+        localStorage.setItem('climapro_tema', tId);
+        if (cor) localStorage.setItem('climapro_accent', cor);
+        const nome = cfgRes.data.nome_app;
+        if (nome) document.querySelectorAll('.login-logo, .brand').forEach(el=>el.textContent=nome);
+      }
+    } catch(e) { /* silencioso */ }
+  }
 }
 
 function showScreen(id) {
@@ -2689,18 +2787,32 @@ function toast(msg,type='info'){const icons={success:'✅',error:'❌',info:'ℹ
 // TEMAS
 // ============================================================
 const APP_THEMES=[
-  {id:'dark',label:'🌑 Dark',bg:'#0d0d14',accent:'#2d5be3'},
-  {id:'midnight',label:'🌌 Midnight',bg:'#0f0c29',accent:'#7c3aed'},
-  {id:'ocean',label:'🌊 Ocean',bg:'#0a2463',accent:'#00b4d8'},
-  {id:'forest',label:'🌲 Forest',bg:'#1a3a2a',accent:'#52b788'},
-  {id:'wine',label:'🍷 Wine',bg:'#3d0c11',accent:'#e63946'},
-  {id:'slate',label:'🪨 Slate',bg:'#1e293b',accent:'#38bdf8'},
-  {id:'coffee',label:'☕ Coffee',bg:'#2c1a0e',accent:'#e8a030'},
-  {id:'navy',label:'⚓ Navy',bg:'#001845',accent:'#4cc9f0'},
-  {id:'charcoal',label:'🖤 Charcoal',bg:'#1c1c1e',accent:'#ff6b6b'},
-  {id:'emerald',label:'💚 Emerald',bg:'#064e3b',accent:'#34d399'},
-  {id:'purple',label:'💜 Purple',bg:'#3b0764',accent:'#c084fc'},
-  {id:'graphite',label:'🔘 Graphite',bg:'#292524',accent:'#a3a3a3'},
+  // ---- CLAROS (padrão RH) ----
+  {id:'light',     label:'☀️ Claro',       bg:'#2d5be3', accent:'#2d5be3',
+   loginBg:'#f0f2f8', loginBg2:'#e4e9f4', loginCard:'#ffffff', loginText:'#1a1a2e', loginInputBg:'#f8f9ff', loginInputBorder:'#d8d5cc', loginStripe:'rgba(45,91,227,.04)', dark:false},
+  {id:'sky',       label:'🌤 Sky',          bg:'#0284c7', accent:'#0284c7',
+   loginBg:'#f0f8ff', loginBg2:'#e0f2fe', loginCard:'#ffffff', loginText:'#0c1a2e', loginInputBg:'#f5fbff', loginInputBorder:'#bae6fd', loginStripe:'rgba(2,132,199,.04)', dark:false},
+  {id:'sage',      label:'🌿 Sage',         bg:'#16803c', accent:'#16803c',
+   loginBg:'#f0fdf4', loginBg2:'#dcfce7', loginCard:'#ffffff', loginText:'#052e16', loginInputBg:'#f7fef9', loginInputBorder:'#bbf7d0', loginStripe:'rgba(22,128,60,.04)', dark:false},
+  {id:'rose',      label:'🌸 Rose',         bg:'#be185d', accent:'#be185d',
+   loginBg:'#fff1f5', loginBg2:'#fce7f3', loginCard:'#ffffff', loginText:'#2d0a1a', loginInputBg:'#fff8fb', loginInputBorder:'#fbcfe8', loginStripe:'rgba(190,24,93,.04)', dark:false},
+  {id:'amber',     label:'🟡 Âmbar',        bg:'#b45309', accent:'#b45309',
+   loginBg:'#fffbeb', loginBg2:'#fef3c7', loginCard:'#ffffff', loginText:'#1c0d00', loginInputBg:'#fffdf5', loginInputBorder:'#fde68a', loginStripe:'rgba(180,83,9,.04)', dark:false},
+  {id:'violet',    label:'💜 Violeta',      bg:'#6d28d9', accent:'#6d28d9',
+   loginBg:'#f5f3ff', loginBg2:'#ede9fe', loginCard:'#ffffff', loginText:'#1e0a3c', loginInputBg:'#faf9ff', loginInputBorder:'#ddd6fe', loginStripe:'rgba(109,40,217,.04)', dark:false},
+  // ---- ESCUROS ----
+  {id:'dark',      label:'🌑 Dark',         bg:'#0d0d14', accent:'#2d5be3',
+   loginBg:'#0d0d14', loginBg2:'#1a1a2e', loginCard:'rgba(255,255,255,.04)', loginText:'#e8e8f0', loginInputBg:'rgba(255,255,255,.06)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
+  {id:'midnight',  label:'🌌 Midnight',     bg:'#0f0c29', accent:'#7c3aed',
+   loginBg:'#0f0c29', loginBg2:'#1a1440', loginCard:'rgba(255,255,255,.05)', loginText:'#e0dcff', loginInputBg:'rgba(255,255,255,.07)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
+  {id:'ocean',     label:'🌊 Ocean',        bg:'#0a2463', accent:'#00b4d8',
+   loginBg:'#061840', loginBg2:'#0a2463', loginCard:'rgba(255,255,255,.05)', loginText:'#cce8f4', loginInputBg:'rgba(255,255,255,.07)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
+  {id:'forest',    label:'🌲 Forest',       bg:'#1a3a2a', accent:'#52b788',
+   loginBg:'#0f2318', loginBg2:'#1a3a2a', loginCard:'rgba(255,255,255,.05)', loginText:'#c8e6d0', loginInputBg:'rgba(255,255,255,.07)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
+  {id:'wine',      label:'🍷 Wine',         bg:'#3d0c11', accent:'#e63946',
+   loginBg:'#280810', loginBg2:'#3d0c11', loginCard:'rgba(255,255,255,.05)', loginText:'#ffd0d3', loginInputBg:'rgba(255,255,255,.07)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
+  {id:'slate',     label:'🪨 Slate',        bg:'#1e293b', accent:'#38bdf8',
+   loginBg:'#0f172a', loginBg2:'#1e293b', loginCard:'rgba(255,255,255,.05)', loginText:'#cbd5e1', loginInputBg:'rgba(255,255,255,.07)', loginInputBorder:'rgba(255,255,255,.12)', loginStripe:'rgba(255,255,255,.02)', dark:true},
 ];
 
 function renderTemasPage() {
@@ -2785,22 +2897,42 @@ function renderConfiguracoesPage() {
   document.getElementById('cfg_cor_primaria_app_hex').oninput=function(){if(/^#[0-9A-Fa-f]{6}$/.test(this.value)){document.getElementById('cfg_cor_primaria_app').value=this.value;updateAdminPreview();}};
   document.getElementById('cfg_tamanho_fonte').oninput=updateAdminPreview;
   document.getElementById('cfg_nome_app').oninput=updateAdminPreview;
-  const temaAtual=c.tema_app||'dark';
+  const temaAtual=c.tema_app||'light';
   const sel=document.getElementById('temaAppSelector');
   sel.style.gridTemplateColumns='repeat(3, 1fr)';
-  sel.innerHTML=APP_THEMES.map(t=>`<div class="tema-app-btn ${temaAtual===t.id?'active':''}" style="background:${t.bg};color:#fff;border-color:${temaAtual===t.id?t.accent:'transparent'};flex-direction:column;gap:3px;padding:10px 8px" onclick="selectAppTheme('${t.id}',this)" data-theme-id="${t.id}">
-    <div style="display:flex;gap:4px;align-items:center;width:100%"><div style="width:10px;height:10px;border-radius:50%;background:${t.accent};flex-shrink:0"></div><span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.label}</span></div>
-    <div style="display:flex;gap:2px;width:100%"><div style="flex:0 0 30%;height:4px;border-radius:2px;background:${t.accent}88"></div><div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.12)"></div></div>
-  </div>`).join('');
+  sel.innerHTML=APP_THEMES.map(t=>{
+    const textColor = t.dark ? '#fff' : (t.loginText || '#1a1a2e');
+    const subBg = t.dark ? 'rgba(255,255,255,.12)' : (t.accent+'22');
+    return `<div class="tema-app-btn ${temaAtual===t.id?'active':''}"
+      style="background:${t.dark?t.bg:t.loginBg};color:${textColor};border-color:${temaAtual===t.id?t.accent:'transparent'};flex-direction:column;gap:3px;padding:10px 8px"
+      onclick="selectAppTheme('${t.id}',this)" data-theme-id="${t.id}">
+      <div style="display:flex;gap:4px;align-items:center;width:100%">
+        <div style="width:10px;height:10px;border-radius:50%;background:${t.accent};flex-shrink:0;border:1px solid rgba(0,0,0,.1)"></div>
+        <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${textColor}">${t.label}</span>
+      </div>
+      <div style="display:flex;gap:2px;width:100%">
+        <div style="flex:0 0 30%;height:4px;border-radius:2px;background:${t.accent}88"></div>
+        <div style="flex:1;height:4px;border-radius:2px;background:${subBg}"></div>
+      </div>
+    </div>`;
+  }).join('');
   updateAdminPreview();
 }
 
 function selectAppTheme(themeId,el){document.querySelectorAll('.tema-app-btn').forEach(b=>{b.classList.remove('active');b.style.borderColor='transparent';});el.classList.add('active');const t=APP_THEMES.find(x=>x.id===themeId);if(t)el.style.borderColor=t.accent;updateAdminPreview();}
-function getSelectedAppTheme(){const btn=document.querySelector('.tema-app-btn.active');if(!btn)return'dark';return btn.getAttribute('data-theme-id')||'dark';}
-function updateAdminPreview(){const themeId=getSelectedAppTheme();const t=APP_THEMES.find(x=>x.id===themeId)||APP_THEMES[0];const nome=document.getElementById('cfg_nome_app').value||'ClimaPRO';const sidebar=document.getElementById('previewSidebar');sidebar.style.background=t.bg;document.getElementById('previewBrand').textContent=nome;}
+function getSelectedAppTheme(){const btn=document.querySelector('.tema-app-btn.active');if(!btn)return'light';return btn.getAttribute('data-theme-id')||'light';}
+function updateAdminPreview(){
+  const themeId=getSelectedAppTheme();
+  const t=APP_THEMES.find(x=>x.id===themeId)||APP_THEMES[0];
+  const nome=document.getElementById('cfg_nome_app').value||'ClimaPRO';
+  const sidebar=document.getElementById('previewSidebar');
+  sidebar.style.background=t.bg;
+  document.getElementById('previewBrand').textContent=nome;
+  document.getElementById('previewBrand').style.color=t.dark?'#fff':'rgba(255,255,255,.95)';
+}
 
 function applyAppTheme(){
-  const themeId=state.configs.tema_app||'dark';
+  const themeId=state.configs.tema_app||'light';
   const t=APP_THEMES.find(x=>x.id===themeId)||APP_THEMES[0];
   document.getElementById('adminShell').setAttribute('data-app-theme',themeId);
   const sidebar=document.getElementById('adminSidebar');
@@ -2814,14 +2946,45 @@ function applyAppTheme(){
   if(fonte>=13&&fonte<=18)document.body.style.fontSize=fonte+'px';
   const nome=state.configs.nome_app;
   if(nome)document.querySelectorAll('.brand').forEach(el=>el.textContent=nome);
+  // Aplica tema na tela de login
+  applyLoginTheme(t, cor);
+}
+
+function applyLoginTheme(t, accentCor) {
+  const r = document.documentElement;
+  const cor = accentCor || t.accent;
+  r.style.setProperty('--login-accent',      cor);
+  r.style.setProperty('--login-bg',          t.loginBg);
+  r.style.setProperty('--login-bg2',         t.loginBg2);
+  r.style.setProperty('--login-card-bg',     t.loginCard);
+  r.style.setProperty('--login-card-border', t.dark ? 'rgba(255,255,255,.12)' : cor+'25');
+  r.style.setProperty('--login-text',        t.loginText);
+  r.style.setProperty('--login-text-soft',   t.dark ? 'rgba(255,255,255,.6)'  : '#4a4a6a');
+  r.style.setProperty('--login-text-muted',  t.dark ? 'rgba(255,255,255,.3)'  : '#8a8aa0');
+  r.style.setProperty('--login-input-bg',    t.loginInputBg);
+  r.style.setProperty('--login-input-border',t.loginInputBorder);
+  r.style.setProperty('--login-stripe',      t.loginStripe);
+  // Sombra do card adaptada ao tom
+  const loginCard = document.querySelector('.login-card');
+  if (loginCard) {
+    loginCard.style.boxShadow = t.dark
+      ? '0 20px 60px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3)'
+      : `0 20px 60px ${cor}18, 0 4px 16px rgba(0,0,0,.06)`;
+  }
 }
 
 async function salvarConfiguracoes(){
   const themeId=getSelectedAppTheme();
   const configs={nome_app:document.getElementById('cfg_nome_app').value,nome_empresa:document.getElementById('cfg_nome_empresa').value,logo_url:document.getElementById('cfg_logo_url').value,rodape_texto:document.getElementById('cfg_rodape_texto').value,tema_app:themeId,tamanho_fonte:document.getElementById('cfg_tamanho_fonte').value,cor_primaria_app:document.getElementById('cfg_cor_primaria_app').value};
   const res=await api('salvarConfiguracoes',{token:adminToken,configs});
-  if(res.success){toast('Configurações salvas!','success');await loadConfigs();applyAppTheme();}
-  else toast('Erro: '+res.error,'error');
+  if(res.success){
+    toast('Configurações salvas!','success');
+    // Persiste no localStorage para evitar flash na próxima visita
+    localStorage.setItem('climapro_tema', themeId);
+    localStorage.setItem('climapro_accent', configs.cor_primaria_app||'');
+    await loadConfigs();
+    applyAppTheme();
+  } else toast('Erro: '+res.error,'error');
 }
 
 // ============================================================
