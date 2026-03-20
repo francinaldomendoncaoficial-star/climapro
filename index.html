@@ -697,6 +697,83 @@ tbody tr:last-child { border-bottom: none; }
   background: var(--accent-pale);
 }
 
+/* ============================================
+   STAR RATING — Avaliação por Estrelas
+   ============================================ */
+
+.star-scale {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 0;
+  flex-direction: row-reverse; /* trick CSS para hover em cascata */
+  justify-content: flex-end;
+}
+
+.star-option { position: relative; }
+.star-option input { display: none; }
+
+.star-btn {
+  display: block;
+  font-size: 38px;
+  cursor: pointer;
+  color: #d8d5cc;
+  transition: color .15s, transform .2s cubic-bezier(.34,1.56,.64,1), filter .15s;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Hover: ilumina a estrela e todas à esquerda (usando flex row-reverse + ~ seletor) */
+.star-scale .star-option label:hover .star-btn,
+.star-scale .star-option label:hover ~ .star-option label .star-btn {
+  color: var(--star-active, #f5a623);
+  filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--star-active, #f5a623) 60%, transparent));
+  transform: scale(1.15);
+}
+
+/* Selecionado: a estrela clicada e todas à direita no DOM (que são à esquerda visualmente) ficam douradas */
+.star-scale .star-option input:checked ~ .star-option label .star-btn {
+  color: var(--star-active, #f5a623);
+}
+
+/* A própria estrela selecionada */
+.star-option input:checked + label .star-btn {
+  color: var(--star-active, #f5a623);
+  transform: scale(1.25);
+  filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--star-active, #f5a623) 70%, transparent));
+}
+
+/* Legenda da estrela selecionada */
+.star-legend {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+  min-height: 20px;
+  text-align: left;
+  transition: all .2s;
+}
+
+/* Variante: estrelas menores (builder preview) */
+.star-scale.star-sm .star-btn { font-size: 26px; }
+
+/* Estilos de cor */
+.star-scale.style-gold   .star-option input:checked + label .star-btn,
+.star-scale.style-gold   .star-option label:hover .star-btn,
+.star-scale.style-gold   .star-option label:hover ~ .star-option label .star-btn { color: #f5a623; filter: drop-shadow(0 2px 6px rgba(245,166,35,.5)); }
+
+.star-scale.style-blue   .star-option input:checked + label .star-btn,
+.star-scale.style-blue   .star-option label:hover .star-btn,
+.star-scale.style-blue   .star-option label:hover ~ .star-option label .star-btn { color: var(--accent); filter: drop-shadow(0 2px 6px rgba(45,91,227,.4)); }
+
+.star-scale.style-red    .star-option input:checked + label .star-btn,
+.star-scale.style-red    .star-option label:hover .star-btn,
+.star-scale.style-red    .star-option label:hover ~ .star-option label .star-btn { color: #e63946; filter: drop-shadow(0 2px 6px rgba(230,57,70,.4)); }
+
+.star-scale.style-green  .star-option input:checked + label .star-btn,
+.star-scale.style-green  .star-option label:hover .star-btn,
+.star-scale.style-green  .star-option label:hover ~ .star-option label .star-btn { color: #1aad6e; filter: drop-shadow(0 2px 6px rgba(26,173,110,.4)); }
+
 /* ---- BUILDER: painel de configuração emoji ---- */
 .emoji-config-panel {
   margin-top: 10px;
@@ -1588,8 +1665,20 @@ const EMOJI_STYLE_OPTIONS = [
 ];
 
 // ============================================================
-// FINGERPRINT
+// STAR RATING — Definições de estilos
 // ============================================================
+const STAR_STYLES = {
+  'gold':  { label: 'Dourado (clássico)', color: '#f5a623', styleClass: 'style-gold',  symbol: '★' },
+  'blue':  { label: 'Azul',              color: '#2d5be3', styleClass: 'style-blue',  symbol: '★' },
+  'red':   { label: 'Vermelho',          color: '#e63946', styleClass: 'style-red',   symbol: '★' },
+  'green': { label: 'Verde',             color: '#1aad6e', styleClass: 'style-green', symbol: '★' },
+};
+
+const STAR_LEGENDS_5 = ['Muito Ruim', 'Ruim', 'Regular', 'Bom', 'Excelente'];
+const STAR_LEGENDS_3 = ['Ruim', 'Regular', 'Bom'];
+
+// ============================================================
+// FINGERPRINT
 function getFingerprint() {
   let fp = localStorage.getItem(FINGERPRINT_KEY);
   if (!fp) {
@@ -1879,8 +1968,9 @@ function addPerguntaBuilder(data) {
     <div class="question-builder-header">
       <strong style="font-size:13px">Pergunta ${perguntaCount}</strong>
       <div class="flex gap-2">
-        <select class="form-control" id="${id}_tipo" style="width:180px;padding:5px 8px;font-size:13px" onchange="updatePerguntaTipo('${id}')">
+        <select class="form-control" id="${id}_tipo" style="width:190px;padding:5px 8px;font-size:13px" onchange="updatePerguntaTipo('${id}')">
           <option value="escala"   ${tipo==='escala'  ?'selected':''}>Escala (1–5)</option>
+          <option value="estrelas" ${tipo==='estrelas'?'selected':''}>⭐ Avaliação por Estrelas</option>
           <option value="multipla" ${tipo==='multipla'?'selected':''}>Múltipla escolha</option>
           <option value="texto"    ${tipo==='texto'   ?'selected':''}>Texto livre</option>
         </select>
@@ -1903,6 +1993,10 @@ function addPerguntaBuilder(data) {
   // Inicializa painel correto
   if (tipo === 'escala') {
     renderEscalaOpcoes(id, isEmoji, emojiStyleKey);
+  } else if (tipo === 'estrelas') {
+    const isStarEmoji = data?.OPCOES && String(data.OPCOES).startsWith('star:');
+    const starCfg = isStarEmoji ? parseStarOpcoes(data.OPCOES) : { count: 5, style: 'gold' };
+    renderEstrelasOpcoes(id, starCfg.count, starCfg.style);
   } else if (tipo === 'multipla') {
     const opcoes = data?.OPCOES ? data.OPCOES.split(',') : [];
     renderOpcoesBuilder(id, opcoes);
@@ -1913,6 +2007,8 @@ function updatePerguntaTipo(id) {
   const tipo = document.getElementById(id + '_tipo').value;
   if (tipo === 'escala') {
     renderEscalaOpcoes(id, false, '5_colorido');
+  } else if (tipo === 'estrelas') {
+    renderEstrelasOpcoes(id, 5, 'gold');
   } else if (tipo === 'multipla') {
     renderOpcoesBuilder(id, []);
   } else {
@@ -2007,6 +2103,83 @@ function getSelectedEmojiStyle(id) {
   return '5_colorido';
 }
 
+/**
+ * Renderiza o painel de configuração de estrelas no builder
+ */
+function renderEstrelasOpcoes(id, count, styleKey) {
+  const container = document.getElementById(id + '_opcoes');
+  container.innerHTML = `
+    <div class="emoji-config-panel" style="border-color:var(--warning);background:#fffbf0">
+      <div class="emoji-config-label" style="color:#b07800">⭐ Configurar Avaliação por Estrelas</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-soft);margin-bottom:6px">Quantidade de estrelas</div>
+        <div style="display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 12px;border:2px solid var(--border);border-radius:var(--radius);background:white;transition:all .15s" id="${id}_star_count_3_lbl">
+            <input type="radio" name="${id}_star_count" value="3" ${count===3?'checked':''} onchange="updateStarPreview('${id}')"> 3 estrelas
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 12px;border:2px solid var(--border);border-radius:var(--radius);background:white;transition:all .15s" id="${id}_star_count_5_lbl">
+            <input type="radio" name="${id}_star_count" value="5" ${count===5||!count?'checked':''} onchange="updateStarPreview('${id}')"> 5 estrelas
+          </label>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-soft);margin-bottom:6px">Cor das estrelas</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${Object.entries(STAR_STYLES).map(([key,s])=>`
+            <div style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 14px;border:2px solid ${styleKey===key?s.color:'var(--border)'};border-radius:var(--radius);background:white;transition:all .15s;font-weight:${styleKey===key?'600':'400'}"
+                 id="${id}_star_style_${key}_lbl" onclick="selectStarStyle('${id}','${key}')">
+              <span style="color:${s.color};font-size:18px">★</span> ${s.label}
+            </div>`).join('')}
+        </div>
+      </div>
+      <div id="${id}_star_preview" style="margin-top:8px"></div>
+    </div>`;
+  container.setAttribute('data-star-style', styleKey);
+  updateStarPreview(id);
+}
+
+function selectStarStyle(id, key) {
+  const container = document.getElementById(id + '_opcoes');
+  container.setAttribute('data-star-style', key);
+  Object.keys(STAR_STYLES).forEach(k => {
+    const el = document.getElementById(id + '_star_style_' + k + '_lbl');
+    if (el) { el.style.borderColor = k===key ? STAR_STYLES[k].color : 'var(--border)'; el.style.fontWeight = k===key ? '600' : '400'; }
+  });
+  updateStarPreview(id);
+}
+
+function getStarCount(id) {
+  const el = document.querySelector(`input[name="${id}_star_count"]:checked`);
+  return el ? parseInt(el.value) : 5;
+}
+
+function getStarStyle(id) {
+  return document.getElementById(id + '_opcoes')?.getAttribute('data-star-style') || 'gold';
+}
+
+function updateStarPreview(id) {
+  const count = getStarCount(id);
+  const styleKey = getStarStyle(id);
+  const style = STAR_STYLES[styleKey];
+  const legends = count === 3 ? STAR_LEGENDS_3 : STAR_LEGENDS_5;
+  const previewEl = document.getElementById(id + '_star_preview');
+  if (!previewEl) return;
+  previewEl.innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Preview</div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px">
+      <div style="display:flex;gap:4px;margin-bottom:6px">
+        ${Array.from({length:count},()=>`<span style="font-size:28px;color:${style.color};filter:drop-shadow(0 2px 4px ${style.color}55)">★</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted)">${legends[legends.length-1]} (${count}/${count})</div>
+    </div>`;
+}
+
+function parseStarOpcoes(opcoes) {
+  // formato: "star:5:gold"
+  const parts = String(opcoes).split(':');
+  return { count: parseInt(parts[1]) || 5, style: parts[2] || 'gold' };
+}
+
 function renderOpcoesBuilder(id, opcoes) {
   const container = document.getElementById(id + '_opcoes');
   const existing = opcoes.length > 0 ? opcoes : [''];
@@ -2053,6 +2226,11 @@ function getPerguntas() {
         opcoesStr = 'emoji:' + styleKey;
       }
       // else: opcoesStr = '' (escala numérica normal, como já era)
+    } else if (tipo === 'estrelas') {
+      // Serializa como "star:5:gold"
+      const starCount = getStarCount(id);
+      const starStyleKey = getStarStyle(id);
+      opcoesStr = 'star:' + starCount + ':' + starStyleKey;
     } else if (tipo === 'multipla') {
       document.querySelectorAll(`#${id}_optList .option-item input`).forEach(inp => {
         const v = inp.value.trim(); if (v) opcoes.push(v);
@@ -2200,12 +2378,42 @@ function renderAnaliseBloco(a) {
   const q=a.pergunta;
   let body='';
   const isEmoji = q.OPCOES && String(q.OPCOES).startsWith('emoji:');
+  const isEstrelas = q.TIPO === 'estrelas' || (q.OPCOES && String(q.OPCOES).startsWith('star:'));
 
-  if(q.TIPO==='escala'){
+  if (isEstrelas) {
+    // ---- RELATÓRIO: estrelas ----
+    const cfg = parseStarOpcoes(q.OPCOES || 'star:5:gold');
+    const style = STAR_STYLES[cfg.style] || STAR_STYLES['gold'];
+    const legends = cfg.count === 3 ? STAR_LEGENDS_3 : STAR_LEGENDS_5;
+    const values = cfg.count === 3 ? [1,3,5] : [1,2,3,4,5];
+    const dist = a.distribuicao || {};
+    const total = a.total || 1;
+    const bars = values.map((v, i) => {
+      const count = dist[v] || 0;
+      const pct = Math.round((count / total) * 100);
+      const stars = '★'.repeat(i+1);
+      return `<div class="chart-row">
+        <div class="chart-label" style="color:${style.color}">${stars} ${legends[i]}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill" data-w="${pct}%" style="width:0%;background:${style.color}">${pct}%</div></div>
+        <div class="chart-count">${count}</div>
+      </div>`;
+    }).join('');
+    // Média em estrelas
+    const mediaNum = a.media || 0;
+    const starsPreview = Array.from({length:cfg.count},(_,i)=>`<span style="font-size:28px;color:${i < Math.round(mediaNum*(cfg.count/5)) ? style.color : '#d8d5cc'}">★</span>`).join('');
+    body = `
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+        <div style="font-size:32px;line-height:1">${starsPreview}</div>
+        <div>
+          <div class="stat-value" style="font-size:24px">${mediaNum}</div>
+          <div class="text-muted">média de ${a.total} respostas</div>
+        </div>
+      </div>
+      <div class="chart-bars">${bars}</div>`;
+
+  } else if(q.TIPO==='escala'){
     const dist=a.distribuicao||{};
     const total=a.total||1;
-
-    // Se emoji: usa os labels dos rostos em vez de "1 — Muito Ruim"
     let labelMap={1:'1',2:'2',3:'3',4:'4',5:'5'};
     if(isEmoji){
       const styleKey=q.OPCOES.split(':').slice(1).join(':');
@@ -2218,7 +2426,6 @@ function renderAnaliseBloco(a) {
       const labels={1:'Muito Ruim',2:'Ruim',3:'Regular',4:'Bom',5:'Muito Bom'};
       Object.keys(labels).forEach(k=>{labelMap[k]=k+' — '+labels[k];});
     }
-
     const bars=[1,2,3,4,5].map(n=>{
       const count=dist[n]||0;
       const pct=Math.round((count/total)*100);
@@ -2237,7 +2444,9 @@ function renderAnaliseBloco(a) {
     const textos=a.textos||[];
     body=textos.length===0?'<p class="text-muted">Nenhuma resposta</p>':textos.map(t=>`<div style="background:var(--surface-warm);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 4px 4px 0;margin-bottom:6px;font-size:14px">${t}</div>`).join('');
   }
-  return `<div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)"><div class="question-num">Pergunta ${q.ORDEM} — ${isEmoji?'🎭 escala rostos':q.TIPO}</div><div class="question-text" style="font-size:15px;margin-bottom:16px">${q.TEXTO}</div>${body}</div>`;
+
+  const tipoLabel = isEstrelas ? '⭐ estrelas' : isEmoji ? '🎭 rostos' : q.TIPO;
+  return `<div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)"><div class="question-num">Pergunta ${q.ORDEM} — ${tipoLabel}</div><div class="question-text" style="font-size:15px;margin-bottom:16px">${q.TEXTO}</div>${body}</div>`;
 }
 
 // ============================================================
@@ -2287,7 +2496,26 @@ function renderPerguntaForm(q, idx) {
   const isEmoji = q.OPCOES && String(q.OPCOES).startsWith('emoji:');
   let input = '';
 
-  if (q.TIPO === 'escala' && isEmoji) {
+  if (q.TIPO === 'estrelas') {
+    // ---- STAR RATING ----
+    const cfg = parseStarOpcoes(q.OPCOES || 'star:5:gold');
+    const style = STAR_STYLES[cfg.style] || STAR_STYLES['gold'];
+    const legends = cfg.count === 3 ? STAR_LEGENDS_3 : STAR_LEGENDS_5;
+    const values = cfg.count === 3 ? [1, 3, 5] : [1, 2, 3, 4, 5];
+    input = `
+      <div class="star-scale ${style.styleClass}" id="star_wrap_${q.ID}"
+           style="--star-active:${style.color}">
+        ${[...values].reverse().map((val, i) => {
+          const revIdx = values.length - 1 - i;
+          return `<div class="star-option">
+            <input type="radio" name="q_${q.ID}" id="q_${q.ID}_${val}" value="${val}"
+                   onchange="updateSurveyProgress();updateStarLegend('${q.ID}','${cfg.style}',${cfg.count})">
+            <label for="q_${q.ID}_${val}"><span class="star-btn">★</span></label>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="star-legend" id="star_legend_${q.ID}">Selecione uma avaliação</div>`;
+  } else if (q.TIPO === 'escala' && isEmoji) {
     // ---- EMOJI SCALE ----
     const styleKey = q.OPCOES.split(':').slice(1).join(':');
     const style = EMOJI_STYLES[styleKey] || EMOJI_STYLES['5_colorido'];
@@ -2320,6 +2548,25 @@ function renderPerguntaForm(q, idx) {
       <div class="question-text">${q.TEXTO}</div>
       ${input}
     </div>`;
+}
+
+/**
+ * Atualiza a legenda textual abaixo das estrelas quando o usuário seleciona.
+ */
+function updateStarLegend(qId, styleKey, count) {
+  const sel = document.querySelector(`input[name="q_${qId}"]:checked`);
+  const legendEl = document.getElementById('star_legend_' + qId);
+  if (!legendEl) return;
+  if (!sel) { legendEl.textContent = 'Selecione uma avaliação'; legendEl.style.color = 'var(--text-muted)'; return; }
+  const val = parseInt(sel.value);
+  const style = STAR_STYLES[styleKey] || STAR_STYLES['gold'];
+  const legends = count === 3 ? STAR_LEGENDS_3 : STAR_LEGENDS_5;
+  const values = count === 3 ? [1, 3, 5] : [1, 2, 3, 4, 5];
+  const idx = values.indexOf(val);
+  const label = idx >= 0 ? legends[idx] : '';
+  const stars = '★'.repeat(values.indexOf(val) + 1);
+  legendEl.innerHTML = `<span style="color:${style.color}">${stars}</span> <strong>${label}</strong> <span style="color:var(--text-muted);font-weight:400">(${values.indexOf(val)+1}/${count})</span>`;
+  legendEl.style.color = style.color;
 }
 
 /**
@@ -2405,6 +2652,19 @@ function showSurveyAlreadyAnswered(respostas) {
         const values=style.valueMap||style.faces.map((_,i)=>i+1);
         const idx=values.indexOf(numVal);
         if(idx>=0) valorDisplay=style.faces[idx]+' '+style.legends[idx]+' ('+v+')';
+      }
+    }
+    // Se é escala de estrelas
+    else if(perg&&perg.opcoes&&String(perg.opcoes).startsWith('star:')){
+      const cfg=parseStarOpcoes(String(perg.opcoes));
+      const style=STAR_STYLES[cfg.style]||STAR_STYLES['gold'];
+      const legends=cfg.count===3?STAR_LEGENDS_3:STAR_LEGENDS_5;
+      const values=cfg.count===3?[1,3,5]:[1,2,3,4,5];
+      const numVal=parseInt(v);
+      const idx=values.indexOf(numVal);
+      if(idx>=0){
+        const stars='★'.repeat(idx+1)+'☆'.repeat(cfg.count-idx-1);
+        valorDisplay=`<span style="color:${style.color};font-size:18px">${stars}</span> ${legends[idx]}`;
       }
     }
     return {label,valor:valorDisplay};
@@ -2584,6 +2844,11 @@ function applyTemaToSurvey(tema){
     .emoji-option input:checked+label .emoji-btn{border-color:${tema.COR_PRIMARIA}!important;background:${tema.COR_PRIMARIA}18!important;box-shadow:0 8px 24px ${tema.COR_PRIMARIA}40!important;}
     .emoji-option input:checked+label .emoji-btn::after{border-color:${tema.COR_PRIMARIA}!important;}
     .emoji-option input:checked+label .emoji-legend{color:${tema.COR_PRIMARIA}!important;}
+    .star-scale .star-option input:checked+label .star-btn,
+    .star-scale .star-option label:hover .star-btn,
+    .star-scale .star-option label:hover~.star-option label .star-btn,
+    .star-scale .star-option input:checked~.star-option label .star-btn{color:${tema.COR_PRIMARIA}!important;filter:drop-shadow(0 2px 6px ${tema.COR_PRIMARIA}88)!important;}
+    .star-legend{color:${tema.COR_PRIMARIA}!important;}
     .choice-option input:checked+.choice-label{border-color:${tema.COR_PRIMARIA}!important;background:${tema.COR_PRIMARIA}15!important;}
     .choice-option input:checked+.choice-label .choice-dot{background:${tema.COR_PRIMARIA}!important;border-color:${tema.COR_PRIMARIA}!important;}
     .btn-primary{background:${tema.COR_PRIMARIA}!important;}
