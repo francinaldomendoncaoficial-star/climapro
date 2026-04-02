@@ -943,6 +943,59 @@ tbody tr:last-child { border-bottom: none; }
   gap: 6px;
 }
 .tema-app-btn.active { border-color: var(--accent); background: var(--accent-pale); }
+
+/* ---- CLIMA BUILDER ---- */
+.bloco-clima {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.bloco-clima.ativo { border-color: var(--accent); }
+.bloco-clima-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-warm);
+  cursor: pointer;
+  user-select: none;
+}
+.bloco-clima.ativo .bloco-clima-header { background: var(--accent-pale); }
+.bloco-clima-toggle {
+  width: 42px; height: 24px;
+  border-radius: 12px;
+  background: var(--border);
+  position: relative;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.bloco-clima.ativo .bloco-clima-toggle { background: var(--accent); }
+.bloco-clima-toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px; left: 3px;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.bloco-clima.ativo .bloco-clima-toggle::after { transform: translateX(18px); }
+.bloco-clima-body { display: none; padding: 16px; border-top: 1px solid var(--border); }
+.bloco-clima.ativo .bloco-clima-body { display: block; }
+.bloco-pergunta-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.bloco-pergunta-drag { color: var(--text-muted); cursor: grab; padding-top: 8px; font-size:14px; }
 </style>
 </head>
 <body>
@@ -1343,22 +1396,58 @@ tbody tr:last-child { border-bottom: none; }
     </div>
     <div class="modal-body">
       <input type="hidden" id="pesquisaId">
+
+      <!-- Info básica -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Título <span class="req">*</span></label>
-          <input class="form-control" id="pesquisaTitulo" placeholder="Ex: Clima e Engajamento 2024">
+          <input class="form-control" id="pesquisaTitulo" placeholder="Ex: Clima Organizacional 2025">
         </div>
         <div class="form-group">
           <label class="form-label">Descrição</label>
           <input class="form-control" id="pesquisaDesc" placeholder="Breve descrição">
         </div>
       </div>
-      <div class="divider"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title">Perguntas</div>
-        <button class="btn btn-secondary btn-sm" onclick="addPerguntaBuilder()">+ Pergunta</button>
+
+      <!-- Tipo -->
+      <div class="form-group">
+        <label class="form-label">Tipo de Pesquisa</label>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border:2px solid var(--border);border-radius:var(--radius);flex:1;transition:all .15s" id="tipo_generica_label">
+            <input type="radio" name="pesquisaTipo" value="generica" id="tipo_generica" onchange="onTipoPesquisaChange()" checked>
+            <div>
+              <div style="font-weight:600">📋 Pesquisa Genérica</div>
+              <div style="font-size:12px;color:var(--text-muted)">Monte as perguntas livremente</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border:2px solid var(--border);border-radius:var(--radius);flex:1;transition:all .15s" id="tipo_clima_label">
+            <input type="radio" name="pesquisaTipo" value="clima" id="tipo_clima" onchange="onTipoPesquisaChange()">
+            <div>
+              <div style="font-weight:600">🌡️ Pesquisa de Clima</div>
+              <div style="font-size:12px;color:var(--text-muted)">Builder por dimensões com relatório especializado</div>
+            </div>
+          </label>
+        </div>
       </div>
-      <div id="perguntasBuilder"></div>
+
+      <div class="divider"></div>
+
+      <!-- Builder Genérico -->
+      <div id="builderGenerico">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title">Perguntas</div>
+          <button class="btn btn-secondary btn-sm" onclick="addPerguntaBuilder()">+ Pergunta</button>
+        </div>
+        <div id="perguntasBuilder"></div>
+      </div>
+
+      <!-- Builder Clima -->
+      <div id="builderClima" class="hidden">
+        <div class="card-title mb-2">🗂️ Blocos / Dimensões</div>
+        <p class="text-muted mb-3" style="font-size:13px">Ative os blocos que deseja incluir e edite as perguntas de cada um.</p>
+        <div id="climaBlocos"></div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalPesquisa')">Cancelar</button>
@@ -1857,13 +1946,13 @@ function renderPesquisas() {
   }
   document.getElementById('pesquisasTable').innerHTML = `
     <table>
-      <thead><tr><th>ID</th><th>Título</th><th>Descrição</th><th>Perguntas</th><th>Status</th><th>Ações</th></tr></thead>
+      <thead><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Perguntas</th><th>Status</th><th>Ações</th></tr></thead>
       <tbody>
         ${state.pesquisas.map(p => `
           <tr>
             <td class="text-muted">${p.ID}</td>
-            <td><strong>${p.TITULO}</strong></td>
-            <td>${p.DESCRICAO || '—'}</td>
+            <td><strong>${p.TITULO}</strong><div class="text-muted" style="font-size:12px">${p.DESCRICAO || ''}</div></td>
+            <td><span class="badge ${p.TIPO==='clima'?'badge-info':'badge-muted'}">${p.TIPO==='clima'?'🌡️ Clima':'📋 Genérica'}</span></td>
             <td><span class="badge badge-info">${(p.perguntas||[]).length} perguntas</span></td>
             <td><span class="badge badge-success">${p.STATUS}</span></td>
             <td>
@@ -1879,12 +1968,195 @@ function renderPesquisas() {
     </table>`;
 }
 
+// ============================================================
+// PESQUISAS — BUILDER GENÉRICO E CLIMA
+// ============================================================
+
+// Definição dos blocos de clima com perguntas padrão editáveis
+const BLOCOS_CLIMA = {
+  'Ambiente e Cultura': {
+    icon: '🏢', color: '#2d5be3',
+    perguntas: [
+      { texto: 'O ambiente físico e as condições de trabalho são adequados para realizar suas atividades?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você sente que a empresa possui uma cultura de respeito e inclusão?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Existe um clima de colaboração e cooperação entre os colegas?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você se sente psicologicamente seguro para expressar suas opiniões?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Liderança e Gestão': {
+    icon: '👔', color: '#7b2d8b',
+    perguntas: [
+      { texto: 'Seu gestor direto é acessível e está disponível quando você precisa?', tipo: 'escala', obrigatoria: true },
+      { texto: 'As decisões da liderança são tomadas de forma justa e transparente?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Seu gestor fornece feedbacks construtivos e orientações claras?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Crescimento e Desenvolvimento': {
+    icon: '📈', color: '#00b894',
+    perguntas: [
+      { texto: 'A empresa oferece oportunidades reais de crescimento profissional?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você tem acesso a treinamentos e capacitações relevantes para seu trabalho?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você enxerga um plano de carreira claro dentro da empresa?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Comunicação Interna': {
+    icon: '📢', color: '#e87820',
+    perguntas: [
+      { texto: 'As informações importantes da empresa chegam a você de forma clara e oportuna?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você se sente bem informado sobre os objetivos e estratégias da empresa?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Os canais de comunicação internos são eficientes e funcionam bem?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Reconhecimento e Remuneração': {
+    icon: '🏆', color: '#c9a227',
+    perguntas: [
+      { texto: 'Você se sente reconhecido pelo trabalho e pelos resultados que entrega?', tipo: 'escala', obrigatoria: true },
+      { texto: 'A remuneração e os benefícios oferecidos são compatíveis com o mercado?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Os critérios para reconhecimento e promoção são claros e justos?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Equilíbrio Vida-Trabalho': {
+    icon: '⚖️', color: '#e63946',
+    perguntas: [
+      { texto: 'A empresa respeita seu tempo fora do horário de trabalho?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você consegue manter um equilíbrio saudável entre vida pessoal e profissional?', tipo: 'escala', obrigatoria: true },
+      { texto: 'A carga de trabalho é distribuída de forma justa e sustentável?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'Propósito e Valores': {
+    icon: '🎯', color: '#0a2463',
+    perguntas: [
+      { texto: 'Você se identifica com os valores e a missão da empresa?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você sente que seu trabalho tem impacto e contribui para algo significativo?', tipo: 'escala', obrigatoria: true },
+      { texto: 'A empresa age de forma ética e coerente com os valores que declara?', tipo: 'escala', obrigatoria: true },
+      { texto: 'Você se sente orgulhoso de trabalhar nesta empresa?', tipo: 'escala', obrigatoria: true },
+    ]
+  },
+  'eNPS': {
+    icon: '🎯', color: '#1aad6e',
+    perguntas: [
+      { texto: 'Em uma escala de 0 a 10, o quanto você recomendaria esta empresa como um bom lugar para trabalhar?', tipo: 'enps', obrigatoria: true },
+    ]
+  },
+  'Perfil': {
+    icon: '👤', color: '#4a4a6a',
+    perguntas: [
+      { texto: 'Há quanto tempo você trabalha nesta empresa?', tipo: 'multipla', obrigatoria: true, opcoes: ['Menos de 6 meses','6 meses a 1 ano','1 a 3 anos','3 a 5 anos','Mais de 5 anos'] },
+      { texto: 'Qual é o seu regime de trabalho?', tipo: 'multipla', obrigatoria: true, opcoes: ['Presencial','Híbrido','Remoto'] },
+      { texto: 'Qual é o seu nível hierárquico?', tipo: 'multipla', obrigatoria: true, opcoes: ['Operacional','Técnico/Especialista','Coordenação/Supervisão','Gerência/Diretoria'] },
+    ]
+  },
+  'Comentários': {
+    icon: '💬', color: '#555',
+    perguntas: [
+      { texto: 'O que você mais aprecia no ambiente de trabalho da empresa?', tipo: 'texto', obrigatoria: false },
+      { texto: 'O que você mudaria para melhorar o clima organizacional?', tipo: 'texto', obrigatoria: false },
+      { texto: 'Qual ação prioritária a empresa deveria tomar para melhorar o ambiente?', tipo: 'texto', obrigatoria: false },
+    ]
+  },
+};
+
+function onTipoPesquisaChange() {
+  const tipo = document.querySelector('input[name="pesquisaTipo"]:checked')?.value || 'generica';
+  document.getElementById('builderGenerico').classList.toggle('hidden', tipo === 'clima');
+  document.getElementById('builderClima').classList.toggle('hidden', tipo !== 'clima');
+  // Atualiza estilo dos labels
+  document.getElementById('tipo_generica_label').style.borderColor = tipo === 'generica' ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('tipo_clima_label').style.borderColor = tipo === 'clima' ? 'var(--accent)' : 'var(--border)';
+  if (tipo === 'clima' && !document.getElementById('climaBlocos').children.length) {
+    renderClimaBlocos([]);
+  }
+}
+
+function renderClimaBlocos(blocosAtivos) {
+  const container = document.getElementById('climaBlocos');
+  container.innerHTML = '';
+  Object.entries(BLOCOS_CLIMA).forEach(([nome, bloco]) => {
+    const ativo = blocosAtivos.includes(nome);
+    const div = document.createElement('div');
+    div.className = 'bloco-clima' + (ativo ? ' ativo' : '');
+    div.dataset.bloco = nome;
+    div.innerHTML = `
+      <div class="bloco-clima-header" onclick="toggleBlocoClima(this.parentElement)">
+        <div class="bloco-clima-toggle"></div>
+        <span style="font-size:18px">${bloco.icon}</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${nome}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${bloco.perguntas.length} pergunta(s) padrão</div>
+        </div>
+        <span style="font-size:12px;color:var(--text-muted)">${ativo ? '▲' : '▼'}</span>
+      </div>
+      <div class="bloco-clima-body">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Edite as perguntas deste bloco:</div>
+        <div class="bloco-perguntas" id="bloco_${nome.replace(/[^a-z0-9]/gi,'_')}">
+          ${bloco.perguntas.map((p, i) => renderBlocoPerguntaItem(nome, i, p)).join('')}
+        </div>
+        <button class="btn btn-secondary btn-sm mt-2" onclick="addBlocoPergunta('${nome}')">+ Pergunta</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function renderBlocoPerguntaItem(nomeBloco, idx, p) {
+  const bid = 'bp_' + nomeBloco.replace(/[^a-z0-9]/gi,'_') + '_' + idx;
+  const tipoOpts = ['escala','enps','multipla','texto'].map(t =>
+    `<option value="${t}" ${p.tipo===t?'selected':''}>${t}</option>`).join('');
+  return `<div class="bloco-pergunta-item" id="${bid}">
+    <span class="bloco-pergunta-drag">⠿</span>
+    <div style="flex:1">
+      <input class="form-control" style="font-size:13px;margin-bottom:4px" value="${p.texto || ''}" placeholder="Texto da pergunta...">
+      <div style="display:flex;gap:8px;align-items:center">
+        <select style="padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px">${tipoOpts}</select>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" ${p.obrigatoria?'checked':''}> Obrigatória
+        </label>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:4px 8px" onclick="this.closest('.bloco-pergunta-item').remove()">✕</button>
+  </div>`;
+}
+
+function addBlocoPergunta(nomeBloco) {
+  const containerId = 'bloco_' + nomeBloco.replace(/[^a-z0-9]/gi,'_');
+  const container = document.getElementById(containerId);
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.innerHTML = renderBlocoPerguntaItem(nomeBloco, idx, { texto: '', tipo: 'escala', obrigatoria: true });
+  container.appendChild(div.firstElementChild);
+}
+
+function toggleBlocoClima(el) {
+  el.classList.toggle('ativo');
+}
+
+function getClimaBlocosData() {
+  const blocos = [];
+  const perguntas = [];
+  document.querySelectorAll('.bloco-clima.ativo').forEach(blocoEl => {
+    const nomeBloco = blocoEl.dataset.bloco;
+    blocos.push(nomeBloco);
+    const items = blocoEl.querySelectorAll('.bloco-pergunta-item');
+    items.forEach(item => {
+      const texto = item.querySelector('input[type="text"], input:not([type])').value.trim();
+      const tipo  = item.querySelector('select').value;
+      const obrig = item.querySelector('input[type="checkbox"]').checked;
+      const dimensao = nomeBloco;
+      const opcoesDef = BLOCOS_CLIMA[nomeBloco]?.perguntas[0]?.opcoes || [];
+      if (texto) perguntas.push({ texto, tipo, obrigatoria: obrig, dimensao, opcoes: opcoesDef });
+    });
+  });
+  return { blocos, perguntas };
+}
+
 function openPesquisaModal() {
   document.getElementById('modalPesquisaTitle').textContent = 'Nova Pesquisa';
   document.getElementById('pesquisaId').value = '';
   document.getElementById('pesquisaTitulo').value = '';
   document.getElementById('pesquisaDesc').value = '';
   document.getElementById('perguntasBuilder').innerHTML = '';
+  document.querySelector('input[name="pesquisaTipo"][value="generica"]').checked = true;
+  document.getElementById('climaBlocos').innerHTML = '';
+  onTipoPesquisaChange();
   openModal('modalPesquisa');
 }
 
@@ -1895,8 +2167,35 @@ function editarPesquisa(id) {
   document.getElementById('pesquisaId').value = p.ID;
   document.getElementById('pesquisaTitulo').value = p.TITULO;
   document.getElementById('pesquisaDesc').value = p.DESCRICAO;
-  document.getElementById('perguntasBuilder').innerHTML = '';
-  (p.perguntas || []).forEach(q => addPerguntaBuilder(q));
+
+  const tipo = p.TIPO || 'generica';
+  document.querySelector(`input[name="pesquisaTipo"][value="${tipo}"]`).checked = true;
+  onTipoPesquisaChange();
+
+  if (tipo === 'clima') {
+    const blocosAtivos = p.blocos || [];
+    renderClimaBlocos(blocosAtivos);
+    // Pré-preenche perguntas editadas nos blocos
+    if (p.perguntas && p.perguntas.length > 0) {
+      const pergsByDim = {};
+      p.perguntas.forEach(q => {
+        const dim = q.DIMENSAO || '';
+        if (!pergsByDim[dim]) pergsByDim[dim] = [];
+        pergsByDim[dim].push(q);
+      });
+      Object.entries(pergsByDim).forEach(([dim, pergs]) => {
+        const containerId = 'bloco_' + dim.replace(/[^a-z0-9]/gi,'_');
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = pergs.map((q, i) => renderBlocoPerguntaItem(dim, i, {
+          texto: q.TEXTO, tipo: q.TIPO, obrigatoria: q.OBRIGATORIA === 'sim'
+        })).join('');
+      });
+    }
+  } else {
+    document.getElementById('perguntasBuilder').innerHTML = '';
+    (p.perguntas || []).forEach(q => addPerguntaBuilder(q));
+  }
   openModal('modalPesquisa');
 }
 
@@ -1904,14 +2203,20 @@ function verPesquisa(id) {
   const p = state.pesquisas.find(x => x.ID === id);
   if (!p) return;
   document.getElementById('modalVerPesquisaTitle').textContent = p.TITULO;
+  const tipoBadge = p.TIPO === 'clima' ? '🌡️ Clima' : '📋 Genérica';
   document.getElementById('modalVerPesquisaBody').innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <span class="badge badge-info">${tipoBadge}</span>
+      <span class="badge badge-success">${(p.perguntas||[]).length} perguntas</span>
+    </div>
     <p class="text-muted mb-2">${p.DESCRICAO || ''}</p>
     <div class="divider"></div>
     ${(p.perguntas || []).map((q, i) => `
       <div class="question-block">
-        <div class="question-num">Pergunta ${i + 1} — ${q.TIPO} ${q.OBRIGATORIA === 'sim' ? '⚡' : ''}</div>
+        ${q.DIMENSAO ? `<span style="font-size:10px;background:var(--accent-pale);color:var(--accent);padding:2px 8px;border-radius:10px;font-weight:600;text-transform:uppercase">${q.DIMENSAO}</span>` : ''}
+        <div class="question-num" style="margin-top:4px">Pergunta ${i + 1} — ${q.TIPO} ${q.OBRIGATORIA === 'sim' ? '⚡' : ''}</div>
         <div class="question-text">${q.TEXTO}</div>
-        ${q.OPCOES ? `<div class="text-muted">Opções: ${q.OPCOES}</div>` : ''}
+        ${q.OPCOES ? `<div class="text-muted" style="font-size:12px">Opções: ${q.OPCOES}</div>` : ''}
       </div>
     `).join('')}`;
   openModal('modalVerPesquisa');
@@ -1930,6 +2235,7 @@ function addPerguntaBuilder(data) {
       <div class="flex gap-2">
         <select class="form-control" id="${id}_tipo" style="width:160px;padding:5px 8px;font-size:13px" onchange="updatePerguntaTipo('${id}')">
           <option value="escala" ${data?.TIPO==='escala'?'selected':''}>Escala (1-5)</option>
+          <option value="enps" ${data?.TIPO==='enps'?'selected':''}>eNPS (0-10)</option>
           <option value="multipla" ${data?.TIPO==='multipla'?'selected':''}>Múltipla escolha</option>
           <option value="texto" ${data?.TIPO==='texto'?'selected':''}>Texto livre</option>
         </select>
@@ -1948,7 +2254,6 @@ function addPerguntaBuilder(data) {
       <div id="${id}_opcoes"></div>
     </div>`;
   document.getElementById('perguntasBuilder').appendChild(div);
-
   if (data?.TIPO === 'multipla') {
     const opcoes = data.OPCOES ? data.OPCOES.split(',') : [];
     renderOpcoesBuilder(id, opcoes);
@@ -1957,11 +2262,8 @@ function addPerguntaBuilder(data) {
 
 function updatePerguntaTipo(id) {
   const tipo = document.getElementById(id + '_tipo').value;
-  if (tipo === 'multipla') {
-    renderOpcoesBuilder(id, []);
-  } else {
-    document.getElementById(id + '_opcoes').innerHTML = '';
-  }
+  if (tipo === 'multipla') renderOpcoesBuilder(id, []);
+  else document.getElementById(id + '_opcoes').innerHTML = '';
 }
 
 function renderOpcoesBuilder(id, opcoes) {
@@ -1999,15 +2301,13 @@ function getPerguntas() {
     const tipo = document.getElementById(id + '_tipo').value;
     const obrig = document.getElementById(id + '_obrig').checked;
     const opcoes = [];
-
     if (tipo === 'multipla') {
       document.querySelectorAll(`#${id}_optList .option-item input`).forEach(inp => {
         const v = inp.value.trim();
         if (v) opcoes.push(v);
       });
     }
-
-    if (texto) perguntas.push({ texto, tipo, obrigatoria: obrig, opcoes });
+    if (texto) perguntas.push({ texto, tipo, obrigatoria: obrig, opcoes, dimensao: '' });
   });
   return perguntas;
 }
@@ -2016,13 +2316,25 @@ async function savePesquisa() {
   const id = document.getElementById('pesquisaId').value;
   const titulo = document.getElementById('pesquisaTitulo').value.trim();
   const descricao = document.getElementById('pesquisaDesc').value.trim();
-  const perguntas = getPerguntas();
+  const tipo = document.querySelector('input[name="pesquisaTipo"]:checked')?.value || 'generica';
 
   if (!titulo) return toast('Título é obrigatório', 'error');
-  if (perguntas.length === 0) return toast('Adicione ao menos uma pergunta', 'error');
+
+  let perguntas, blocos;
+  if (tipo === 'clima') {
+    const data = getClimaBlocosData();
+    perguntas = data.perguntas;
+    blocos = data.blocos;
+    if (blocos.length === 0) return toast('Ative ao menos um bloco de dimensão', 'error');
+    if (perguntas.length === 0) return toast('Adicione ao menos uma pergunta nos blocos ativos', 'error');
+  } else {
+    perguntas = getPerguntas();
+    blocos = [];
+    if (perguntas.length === 0) return toast('Adicione ao menos uma pergunta', 'error');
+  }
 
   const res = await api(id ? 'updatePesquisa' : 'createPesquisa', {
-    token: adminToken, id, titulo, descricao, perguntas
+    token: adminToken, id, titulo, descricao, tipo, perguntas, blocos
   });
 
   if (res.success) {
